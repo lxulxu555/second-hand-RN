@@ -11,22 +11,22 @@ import {
     BackHandler,
     ToastAndroid,
     StatusBar,
-    Dimensions
+    Dimensions, InteractionManager,
 } from 'react-native'
 import {SearchBar, Carousel, Grid, Icon} from '@ant-design/react-native'
 import {createAppContainer} from 'react-navigation';
-import {createStackNavigator} from 'react-navigation-stack';
+import {createStackNavigator,CardStyleInterpolators} from 'react-navigation-stack';
 import ProductDetail from './product-detail'
+import OneClassDetail from './one-class-detail'
 
 import ActionButton from 'react-native-action-button'
-import {reqGetAllProduct, reqClassiFication,reqFindProduct} from '../api/index'
+import {reqGetAllProduct, reqClassiFication, reqFindProduct} from '../api/index'
 import SplashScreen from 'react-native-splash-screen'
 
-var { width, height } = Dimensions.get('window');
+var {width, height} = Dimensions.get('window');
 
 let page = 1;//当前第几页
 let totalPage = 0;//总的页数
-
 
 
 class Home extends Component {
@@ -42,7 +42,7 @@ class Home extends Component {
         DataOu: [],
         DataJi: [],
         waiting: false,//防止多次重复点击
-        searchName : ''
+        searchName: ''
     }
 
     getOneClassFication = async () => {
@@ -69,9 +69,9 @@ class Home extends Component {
 
     getAllProduct = async (page) => {
         let result
-        if(this.state.searchName === ''){
+        if (this.state.searchName === '') {
             result = await reqGetAllProduct('', page, 10, 'create_time desc')
-        }else{
+        } else {
             result = await reqFindProduct(this.state.searchName)
         }
 
@@ -79,7 +79,7 @@ class Home extends Component {
         let data = result.data;
         let NewData = [];
 
-        data.map(function (item,index) {
+        data.map(function (item, index) {
             NewData.push({
                 key: index,
                 value: item,
@@ -94,7 +94,7 @@ class Home extends Component {
 
         this.setState({
             //复制数据源
-            AllProduct: [...this.state.AllProduct,...NewData],
+            AllProduct: [...this.state.AllProduct, ...NewData],
             isLoading: false,
             showFoot: foot,
             isRefreshing: false,
@@ -135,7 +135,7 @@ class Home extends Component {
                             marginBottom: 5,
                             marginLeft: 8
                         }}>
-                           {/* <Image
+                            {/* <Image
                                 source={{uri: item.value.user.img}}
                                 style={{width: 20, height: 20, borderRadius: 20, marginRight: 10}}
                             />
@@ -148,8 +148,8 @@ class Home extends Component {
     }
 
     _PressList = (product) => {
-        this.props.navigation.push('ProductDetail', {
-            ProductId: product.value.id
+        this.props.navigation.navigate('ProductDetail', {
+            ProductId: product.value.id,
         })
         this.setState({waiting: true});
         setTimeout(() => {
@@ -218,7 +218,7 @@ class Home extends Component {
         this.search.state.value = ''
         this.setState({isRefreshing: true});
         setTimeout(() => {
-            this.setState({isRefreshing: false, AllProduct: [],searchName:''});
+            this.setState({isRefreshing: false, AllProduct: [], searchName: ''});
             page = 1;//当前第几页
             totalPage = 0;//总的页数
             this.getAllProduct()
@@ -286,7 +286,7 @@ class Home extends Component {
     }
 
     onBackAndroid = () => {
-        if(this.props.navigation.isFocused()) {//判断   该页面是否处于聚焦状态
+        if (this.props.navigation.isFocused()) {//判断   该页面是否处于聚焦状态
             if (this.lastBackPressed && this.lastBackPressed + 2000 >= Date.now()) {
                 //最近2秒内按过back键，可以退出应用。
                 BackHandler.exitApp();
@@ -297,15 +297,13 @@ class Home extends Component {
         }
     };
 
-    SubmitSearch =  async () => {
+    SubmitSearch = async () => {
         this.setState({
-            AllProduct : [],
-        },() => {
+            AllProduct: [],
+        }, () => {
             this.getAllProduct(1)
         })
     }
-
-
 
 
     componentWillMount() {
@@ -313,18 +311,22 @@ class Home extends Component {
     }
 
     componentDidMount() {
+        InteractionManager.runAfterInteractions(()=>{
+            this.getOneClassFication()
+            this.getAllProduct(page)
+        });
         page = 1;//当前第几页
         totalPage = 0;//总的页数
-        this.getOneClassFication()
-        this.getAllProduct(page)
         setTimeout(() => {
             SplashScreen.hide()
         }, 1500)
         this._navListener = this.props.navigation.addListener("didFocus", () => {
             StatusBar.setBarStyle("dark-content"); //状态栏文字颜色
+            StatusBar.setTranslucent(true)
             StatusBar.setBackgroundColor("#ffffff"); //状态栏背景色
         });
     }
+
 
     componentWillUnmount() {
         BackHandler.removeEventListener('hardwareBackPress', this.onBackAndroid);
@@ -334,18 +336,18 @@ class Home extends Component {
     render() {
         const Onedata = this.state.Onedata || []
         return (
-            <View style={{flex: 1}}>
+            <View style={{flex: 1,marginTop:20}}>
                 <SearchBar
-                    value = {this.state.searchName}
+                    value={this.state.searchName}
                     ref={(search) => this.search = search}
                     placeholder='输入关键字'
                     onChange={(value) => this.setState({
-                        searchName : value
+                        searchName: value
                     })}
-                    onSubmit = {() => this.SubmitSearch()}
-                    onCancel = {() => {
+                    onSubmit={() => this.SubmitSearch()}
+                    onCancel={() => {
                         this.setState({
-                            searchName : ''
+                            searchName: ''
                         })
                     }}
                 />
@@ -363,7 +365,6 @@ class Home extends Component {
                         />
                     }
                 >
-
 
 
                     <Carousel
@@ -391,7 +392,9 @@ class Home extends Component {
                         carouselMaxRow={4}
                         data={Onedata}
                         hasLine={false}
-                        onPress={(_el) => alert(_el.id)}
+                        onPress={(_el) => this.props.navigation.push('OneClassDetail', {
+                            OneClassId: _el.id
+                        })}
                     />
                     <Text style={{paddingLeft: 10}}>
                         <Icon name='fire' color='red'/>
@@ -458,8 +461,8 @@ class Home extends Component {
                                 this.state.AllProduct.length !== 0
                                     ? this.AllProductList() :
                                     <Image
-                                        source={{uri : 'https://www.youzixy.com/img/noGoods.cc45e087.png'}}
-                                        style={{ width:width, height:498*width/750, marginTop:80}}
+                                        source={{uri: 'https://www.youzixy.com/img/noGoods.cc45e087.png'}}
+                                        style={{width: width, height: 498 * width / 750, marginTop: 80}}
                                     />
                             }
                         </View>
@@ -527,35 +530,36 @@ const style = StyleSheet.create({
     },
 })
 
-/*
-export default () => (
-    <Provider>
-        <Home/>
-    </Provider>
-);
-*/
-
 
 const HomeNavigator = createStackNavigator({
-    Home: {
-        screen: Home,
-        navigationOptions: {
-            header: null,
+        Home: {
+            screen: Home,
+            navigationOptions: {
+                title: null,
+                headerTransparent: true, // 背景透明
+            },
+        },
+        ProductDetail: {
+            screen: ProductDetail,
+            navigationOptions: {
+                headerTransparent: true, // 背景透明
+                cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
+                title: null,
+                headerTintColor: '#36B7AB',
+            },
+        },
+        OneClassDetail: {
+            screen: OneClassDetail,
+            navigationOptions: {
+                header: null,
+                cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
+            },
         },
     },
-    ProductDetail: {
-        screen: ProductDetail,
-        navigationOptions: {
-            title: '商品详情',
-            gesturesEnabled: true,
-            headerMode: 'screen',
-        },
-    }
-},
     {
-    initialRouteName: 'Home',
-    headerLayoutPreset: 'center',   //将标题居中
-}
+        initialRouteName: 'Home',
+        headerLayoutPreset: 'center',   //将标题居中
+    },
 )
 
 

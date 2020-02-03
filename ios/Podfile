@@ -40,6 +40,8 @@ target 'EuraisaSecond' do
 
   pod 'RNGestureHandler', :path => '../node_modules/react-native-gesture-handler'
 
+  pod 'react-native-cameraroll', :path => '../node_modules/@react-native-community/cameraroll'
+
   target 'EuraisaSecondTests' do
     inherit! :search_paths
     # Pods for testing

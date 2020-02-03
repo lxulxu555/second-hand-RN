@@ -6,7 +6,7 @@ import ClassiFication from './src/page/classification'
 
 import {createAppContainer} from 'react-navigation'
 import { createBottomTabNavigator } from 'react-navigation-tabs';
-import {ScrollView, StatusBar} from "react-native";
+import {PermissionsAndroid} from "react-native";
 
 
 
@@ -83,6 +83,27 @@ const AppContainer = createAppContainer(TabNavigator)
 
 
 export default class App extends Component{
+    requestExternalStoragePermission = async () => {
+        try {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                {
+                    title: 'My App Storage Permission',
+                    message: 'My App needs access to your storage ' +
+                        'so you can save your photos',
+                },
+            );
+            return granted;
+        } catch (err) {
+            console.error('Failed to request permission ', err);
+            return null;
+        }
+    };
+
+    componentWillMount(){
+        this.requestExternalStoragePermission()
+    }
+
     render() {
         return (
             <Provider>

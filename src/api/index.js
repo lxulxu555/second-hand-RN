@@ -8,3 +8,5 @@ export const reqGetAllProduct = (id,page,rows,orderBy) => ajax(BASE + '/goods/fi
 export const reqFindChildClass = (id) => ajax(BASE + '/classify1/findChildById',{id})
 //根据商品名字查询商品
 export const reqFindProduct = (goodsName) => ajax(BASE + '/goods/findByLike',{goodsName})
+//根据商品id查询商品详情
+export const reqIdDetail = (id,userid) => ajax(BASE + '/goods/findById',{id,userid})
