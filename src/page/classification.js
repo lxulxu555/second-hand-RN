@@ -4,12 +4,10 @@ import {
     View,
     FlatList,
     ScrollView,
-    BackHandler,
-    ToastAndroid,
     TouchableHighlight,
-    Image,
+    Image, StatusBar,
 } from 'react-native'
-import {Toast,Icon} from '@ant-design/react-native'
+import {Toast} from '@ant-design/react-native'
 import {createAppContainer} from 'react-navigation';
 import {createStackNavigator} from 'react-navigation-stack';
 import {reqFindChildClass, reqClassiFication} from '../api'
@@ -107,24 +105,16 @@ class ClassiFication extends Component {
         )
     }
 
-    onBackAndroid = () => {
-        if (this.props.navigation.isFocused()) {//判断   该页面是否处于聚焦状态
-            if (this.lastBackPressed && this.lastBackPressed + 2000 >= Date.now()) {
-                //最近2秒内按过back键，可以退出应用。
-                BackHandler.exitApp();
-            }
-            this.lastBackPressed = Date.now();
-            ToastAndroid.show('再按一次退出应用', ToastAndroid.SHORT);
-            return true;
-        }
-    };
 
     componentWillMount() {
-        BackHandler.addEventListener('hardwareBackPress', this.onBackAndroid)
+        this._navListener = this.props.navigation.addListener("didFocus", () => {
+            StatusBar.setBarStyle("dark-content"); //状态栏文字颜色
+            StatusBar.setBackgroundColor("#ffffff"); //状态栏背景色
+        });
     }
 
     componentWillUnmount() {
-        BackHandler.removeEventListener('hardwareBackPress', this.onBackAndroid);
+        this._navListener.remove();
     }
 
     componentDidMount() {
@@ -135,8 +125,7 @@ class ClassiFication extends Component {
     render() {
         return (
             <View style={{flex: 1,flexDirection: 'row'}}>
-                <ScrollView  showsVerticalScrollIndicator = {false}
-                >
+                <ScrollView  showsVerticalScrollIndicator = {false}>
                         <View style={{width: 90, borderRightWidth: 0.5, borderRightColor: '#DCDCDC'}}>
                             <FlatList
                                 data={this.state.Leftclass}

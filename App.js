@@ -1,6 +1,6 @@
 import React,{Component} from 'react'
 import Home from './src/page/home'
-import User from './src/page/user'
+import User from './src/page/user/user'
 import {Icon,Provider} from '@ant-design/react-native'
 import ClassiFication from './src/page/classification'
 
@@ -45,7 +45,6 @@ const TabNavigator = createBottomTabNavigator(
                 tabBarIcon: ({ focused }) => {
                     return (
                         focused ? <Icon name='user' style={{color:'red'}}/> : <Icon name='user'/>
-
                     )
                 }
             }
@@ -83,6 +82,7 @@ const AppContainer = createAppContainer(TabNavigator)
 
 
 export default class App extends Component{
+    //获取保存图片到相册权限
     requestExternalStoragePermission = async () => {
         try {
             const granted = await PermissionsAndroid.request(
@@ -99,9 +99,29 @@ export default class App extends Component{
             return null;
         }
     };
+    //获取相机权限
+    requestCarmeraPermission = async () => {
+        try {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.CAMERA,
+                {
+                    'title': 'Camera Permission',
+                    'message': 'the project needs access to your camera ' +
+                        'so you can take awesome pictures.'
+                }
+            );
+            return granted;
+        } catch (err) {
+            console.error('Failed to request permission ', err);
+            return null;
+        }
+    }
+
+
 
     componentWillMount(){
         this.requestExternalStoragePermission()
+        this.requestCarmeraPermission()
     }
 
     render() {
@@ -113,56 +133,6 @@ export default class App extends Component{
     }
 }
 
-/*export default class App extends Component{
-    state = {
-        selectedTab : 'home'
-    }
-    render () {
-        return (
-            <View style={style.container}>
-                <TabNavigator>
-                    <TabNavigator.Item
-                        selected={this.state.selectedTab === 'home'}
-                        title="首页"
-                        renderIcon={() => <Icon name='home'/>}
-                        renderSelectedIcon={() => <Icon name='home'/>}
-                        onPress={() => this.setState({ selectedTab: 'home' })}
-                    >
-                        <Home/>
-                    </TabNavigator.Item>
-                    <TabNavigator.Item
-                        selected={this.state.selectedTab === 'classification'}
-                        title="分类"
-                        renderIcon={() => <Icon name='appstore'/>}
-                        renderSelectedIcon={() => <Icon name='appstore'/>}
-                        //renderBadge={() => <CustomBadgeView />}
-                        onPress={() => this.setState({ selectedTab: 'classification' })}
-                    >
-                        <ClassiFication/>
-                    </TabNavigator.Item>
-                    <TabNavigator.Item
-                        selected={this.state.selectedTab === 'user'}
-                        title="个人中心"
-                        renderIcon={() => <Icon name='user'/>}
-                        renderSelectedIcon={() => <Icon name='user'/>}
-                        //renderBadge={() => <CustomBadgeView />}
-                        badgeText="1"
-                        onPress={() => this.setState({ selectedTab: 'user' })}
-                    >
-                        <User/>
-                    </TabNavigator.Item>
-                </TabNavigator>
-            </View>
-
-        )
-    }
-}
-
-const style = StyleSheet.create({
-    container:{
-        flex:1
-    }
-})*/
 
 
 

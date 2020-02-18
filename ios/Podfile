@@ -36,11 +36,12 @@ target 'EuraisaSecond' do
 
   pod 'RNSpringScrollView', :path => '../node_modules/react-native-spring-scrollview'
 
-  pod 'react-native-splash-screen', :path => '../node_modules/react-native-splash-screen'
 
   pod 'RNGestureHandler', :path => '../node_modules/react-native-gesture-handler'
 
   pod 'react-native-cameraroll', :path => '../node_modules/@react-native-community/cameraroll'
+
+  pod 'RNCAsyncStorage', :path => '../node_modules/@react-native-community/async-storage'
 
   target 'EuraisaSecondTests' do
     inherit! :search_paths

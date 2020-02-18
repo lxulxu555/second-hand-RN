@@ -15,8 +15,8 @@ import {
 } from 'react-native'
 import {SearchBar, Carousel, Grid, Icon} from '@ant-design/react-native'
 import {createAppContainer} from 'react-navigation';
-import {createStackNavigator,CardStyleInterpolators} from 'react-navigation-stack';
-import ProductDetail from './product-detail'
+import {createStackNavigator, CardStyleInterpolators} from 'react-navigation-stack';
+import ProductDetail from './product/product-detail'
 import OneClassDetail from './one-class-detail'
 
 import ActionButton from 'react-native-action-button'
@@ -42,7 +42,9 @@ class Home extends Component {
         DataOu: [],
         DataJi: [],
         waiting: false,//防止多次重复点击
-        searchName: ''
+        searchName: '',
+        UserId: '',
+        UserToken: ''
     }
 
     getOneClassFication = async () => {
@@ -150,12 +152,15 @@ class Home extends Component {
     _PressList = (product) => {
         this.props.navigation.navigate('ProductDetail', {
             ProductId: product.value.id,
+            UserId: this.state.UserId,
+            UserToken: this.state.UserToken,
         })
         this.setState({waiting: true});
         setTimeout(() => {
             this.setState({waiting: false})
         }, 1000)
     }
+
     /*  AllProductList = () => {
           const AllProduct = this.state.AllProduct || []
           let DataOu = []
@@ -305,13 +310,83 @@ class Home extends Component {
         })
     }
 
+    _readData = () => {
+        storage.load({
+            key: 'loginState',
+            // autoSync(默认为true)意味着在没有找到数据或数据过期时自动调用相应的sync方法
+            autoSync: true,
+
+            // syncInBackground(默认为true)意味着如果数据过期，
+            // 在调用sync方法的同时先返回已经过期的数据。
+            // 设置为false的话，则等待sync方法提供的最新数据(当然会需要更多时间)。
+            syncInBackground: true,
+
+            // 你还可以给sync方法传递额外的参数
+            syncParams: {
+                extraFetchOptions: {
+                    // 各种参数
+                },
+                someFlag: true,
+            },
+        }).then(ret => {
+            // 如果找到数据，则在then方法中返回
+            // 注意：这是异步返回的结果（不了解异步请自行搜索学习）
+            // 你只能在then这个方法内继续处理ret数据
+            // 而不能在then以外处理
+            // 也没有办法“变成”同步返回
+            // 你也可以使用“看似”同步的async/await语法
+            this.setState({
+                UserId: ret.id
+            })
+        })
+        /*.catch(err => {
+                    //如果没有找到数据且没有sync方法，
+                    //或者有其他异常，则在catch中返回
+                    this.props.navigation.navigate('Login')
+                })*/
+        storage.load({
+            key: 'UserToken',
+            // autoSync(默认为true)意味着在没有找到数据或数据过期时自动调用相应的sync方法
+            autoSync: true,
+
+            // syncInBackground(默认为true)意味着如果数据过期，
+            // 在调用sync方法的同时先返回已经过期的数据。
+            // 设置为false的话，则等待sync方法提供的最新数据(当然会需要更多时间)。
+            syncInBackground: true,
+
+            // 你还可以给sync方法传递额外的参数
+            syncParams: {
+                extraFetchOptions: {
+                    // 各种参数
+                },
+                someFlag: true,
+            },
+        }).then(ret => {
+            // 如果找到数据，则在then方法中返回
+            // 注意：这是异步返回的结果（不了解异步请自行搜索学习）
+            // 你只能在then这个方法内继续处理ret数据
+            // 而不能在then以外处理
+            // 也没有办法“变成”同步返回
+            // 你也可以使用“看似”同步的async/await语法
+            this.setState({
+                UserToken: ret
+            })
+        }).catch(err => {
+            //如果没有找到数据且没有sync方法，
+            //或者有其他异常，则在catch中返回
+            this.setState({
+                UserToken: ''
+            })
+        })
+    }
+
 
     componentWillMount() {
         BackHandler.addEventListener('hardwareBackPress', this.onBackAndroid)
     }
 
     componentDidMount() {
-        InteractionManager.runAfterInteractions(()=>{
+        InteractionManager.runAfterInteractions(() => {
             this.getOneClassFication()
             this.getAllProduct(page)
         });
@@ -319,8 +394,9 @@ class Home extends Component {
         totalPage = 0;//总的页数
         setTimeout(() => {
             SplashScreen.hide()
-        }, 1500)
+        }, 1000)
         this._navListener = this.props.navigation.addListener("didFocus", () => {
+            this._readData()
             StatusBar.setBarStyle("dark-content"); //状态栏文字颜色
             StatusBar.setTranslucent(true)
             StatusBar.setBackgroundColor("#ffffff"); //状态栏背景色
@@ -336,7 +412,7 @@ class Home extends Component {
     render() {
         const Onedata = this.state.Onedata || []
         return (
-            <View style={{flex: 1,marginTop:20}}>
+            <View style={{flex: 1, marginTop: 20}}>
                 <SearchBar
                     value={this.state.searchName}
                     ref={(search) => this.search = search}
