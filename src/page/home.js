@@ -44,7 +44,8 @@ class Home extends Component {
         waiting: false,//防止多次重复点击
         searchName: '',
         UserId: '',
-        UserToken: ''
+        UserToken: '',
+        UserImage:''
     }
 
     getOneClassFication = async () => {
@@ -154,6 +155,7 @@ class Home extends Component {
             ProductId: product.value.id,
             UserId: this.state.UserId,
             UserToken: this.state.UserToken,
+            UserImage : this.state.UserImage
         })
         this.setState({waiting: true});
         setTimeout(() => {
@@ -336,7 +338,8 @@ class Home extends Component {
             // 也没有办法“变成”同步返回
             // 你也可以使用“看似”同步的async/await语法
             this.setState({
-                UserId: ret.id
+                UserId: ret.id,
+                UserImage : ret.img
             })
         })
         /*.catch(err => {

@@ -9,11 +9,11 @@ import {
     ToastAndroid,
     TouchableOpacity,
     ScrollView,
-    FlatList
+    TextInput,
 } from 'react-native'
 import {reqIdDetail} from '../../api/index'
 import {ImageViewer} from 'react-native-image-zoom-viewer'
-import {Carousel, Icon, Toast} from '@ant-design/react-native'
+import {Carousel, Icon, Toast, Grid} from '@ant-design/react-native'
 import ActionButton from 'react-native-action-button'
 
 const RNFS = require('react-native-fs'); //文件处理
@@ -29,6 +29,11 @@ export default class ProductDetail extends Component {
         messageList: [],
         isImageShow: false,
         index: 0,
+        keyboard: false,
+        text: '',
+        replay:false,
+        comment:false,
+        commentItem : {}
     }
 
     getDetail = async () => {
@@ -43,7 +48,7 @@ export default class ProductDetail extends Component {
         this.setState({
             detail: result,
             images: NewImages,
-            messageList: commentList
+            messageList: commentList,
         })
     }
 
@@ -146,24 +151,221 @@ export default class ProductDetail extends Component {
             .catch(err => console.warn(err));
     }
 
+    LikeComment = (comment) => {
+        const Token = this.props.navigation.getParam('UserToken')
+        const userId = this.props.navigation.getParam('UserId')
+        const type = comment.leaf === null ? 'comment' + ':' + comment.commentid + ':' + userId : 'reply' + ':' + comment.id + ':' + userId
+        const state = comment.state === null ? '1' : '0'
+        axios.post('http://39.106.188.22:8800/api/token/like/save', {type, state}, {
+            params: {
+                token: Token
+            }
+        })
+            .then(response => {
+                if (userId === '') {
+                    Toast.fail('请先登录', 1)
+                } else {
+                    if (comment.state === null) {
+                        this.Likecomment[comment.leaf === null ? comment.commentid : comment.id].setNativeProps({
+                            style: {
+                                tintColor: 'red'
+                            }
+                        })
+                        comment.state = 1
+                    } else {
+                        this.Likecomment[comment.leaf === null ? comment.commentid : comment.id].setNativeProps({
+                            style: {
+                                tintColor: 'black'
+                            }
+                        })
+                        comment.state = null
+                    }
+                }
+            })
+            .catch(err => console.warn(err));
+    }
+
     _renderMessage = (MessageList) => {
         return MessageList.map((item, index) => {
-            if (item.replyList.length === 0 || item.replyList === null) {
+            if (!item.replyList) {
                 return (
-                    <View style={{borderBottomWidth:0.8,borderColor:'#F5F5F5'}}>
-                    <View style={{flexDirection: 'row'}}>
-                        <Image source={{uri : item.user.img}} style={{width:35,height:35,borderRadius: 20,marginLeft:10}}/>
-                        <Text style={{ textAlignVertical:'center',marginLeft:10,fontWeight:'bold'}}>{item.user.nickname}</Text>
+                    <View
+                        style={{marginLeft: item.leaf === null ? '5%' : '0%'}}
+                        key={item.leaf === null ? item.commentid : item.id}
+                    >
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            style={{borderBottomWidth: 0.8, borderColor: '#F5F5F5'}}
+                            onPress={() => this.replayComment(item)}
+                        >
+                            <View style={{flexDirection: 'row'}}>
+                                <Image source={{uri: item.user.img}}
+                                       style={{width: 35, height: 35, borderRadius: 20, marginLeft: 10}}/>
+                                <Text style={{
+                                    paddingTop: 10,
+                                    marginLeft: 10,
+                                    fontWeight: 'bold'
+                                }}>{item.user.nickname}</Text>
+                                <View style={{flex: 1}}/>
+                                <TouchableOpacity
+                                    style={{marginRight: 10}}
+                                    onPress={() => this.LikeComment(item)}
+                                >
+                                    <Image
+                                        ref={(ref) => this.Likecomment = {
+                                            ...this.Likecomment,
+                                            [item.leaf === null ? item.commentid : item.id]: ref
+                                        }}
+                                        style={{
+                                            width: 18,
+                                            height: 18,
+                                            marginTop: 10,
+                                            tintColor: item.state === null ? 'black' : 'red'
+                                        }}
+                                        source={require('../../../resources/images/点赞.png')}
+                                    />
+                                </TouchableOpacity>
+                                <Text style={{marginRight: 15, marginTop: 10}}>{item.number}</Text>
+                            </View>
+                            <Text style={{marginTop: '1%', marginLeft: '13%', marginBottom: '2%'}}>{item.content}</Text>
+                            <Text style={{
+                                marginLeft: '13%',
+                                marginBottom: '1%',
+                                color: '#C0C0C0'
+                            }}>{item.createtime}</Text>
+                        </TouchableOpacity>
                     </View>
-                    <Text style={{marginTop:'1%',marginLeft:'13%',marginBottom: '2%'}}>{item.content}</Text>
-                    <Text style={{marginLeft:'13%',marginBottom: '1%',color:'#C0C0C0'}}>{item.createtime}</Text>
-                </View>
                 )
             } else {
-                return <View style={{borderBottomWidth:0.8,borderColor:'#F5F5F5'}}>
-                    {this._renderMessage(item.replyList)}
-                </View>
+                return (
+                    <View>
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            style={{borderBottomWidth: 0.8, borderColor: '#F5F5F5'}}
+                            onPress={() => this.replayComment(item)}
+                        >
+                            <View style={{flexDirection: 'row'}}>
+                                <Image source={{uri: item.user.img}}
+                                       style={{
+                                           width: 35,
+                                           height: 35,
+                                           borderRadius: 20,
+                                           marginLeft: 10,
+                                           marginTop: 10,
+                                       }}/>
+                                <Text style={{
+                                    paddingTop: 10,
+                                    marginLeft: 10,
+                                    fontWeight: 'bold',
+                                }}>
+                                    {item.user.nickname}
+                                </Text>
+                                <View style={{flex: 1}}/>
+                                <TouchableOpacity
+                                    style={{marginRight: 10}}
+                                    onPress={() => this.LikeComment(item)}
+                                >
+                                    <Image
+                                        ref={(ref) => this.Likecomment = {
+                                            ...this.Likecomment,
+                                            [item.leaf === null ? item.commentid : item.id]: ref
+                                        }}
+                                        style={{
+                                            width: 18,
+                                            height: 18,
+                                            marginTop: 10,
+                                            tintColor: item.state === null ? 'black' : 'red'
+                                        }}
+                                        source={require('../../../resources/images/点赞.png')}
+                                    />
+                                </TouchableOpacity>
+                                <Text
+                                    style={{marginRight: 15, marginTop: 10}}
+                                >
+                                    {item.number}
+                                </Text>
+                            </View>
+                            <Text style={{marginTop: '1%', marginLeft: '13%', marginBottom: '2%'}}>{item.content}</Text>
+                            <Text style={{
+                                marginLeft: '13%',
+                                marginBottom: '1%',
+                                color: '#C0C0C0'
+                            }}>{item.createtime}</Text>
+                        </TouchableOpacity>
+                        <View style={{
+                            marginLeft: item.leaf === null ? '8%' : '0%'
+                        }}>
+                            {this._renderMessage(item.replyList)}
+                        </View>
+                    </View>
+                )
             }
+        })
+    }
+
+    sendComment = () => {
+        if(this.state.comment){
+            const content = this.state.text
+            const userid = this.props.navigation.getParam('UserId')
+            const goodsid = this.props.navigation.getParam('ProductId')
+            const Token = this.props.navigation.getParam('UserToken')
+            axios.post('http://39.106.188.22:8800/api/token/comment/save', {content, userid, goodsid}, {
+                params: {
+                    token: Token
+                }
+            })
+                .then(response => {
+                    if (userid === '') {
+                        Toast.fail('请先登录', 1)
+                    } else {
+                        if (response.data.code === 0) {
+                            this.getDetail()
+                            this.setState({
+                                keyboard: false,
+                            })
+                        }
+                    }
+                })
+                .catch(err => console.warn(err));
+        } else if(this.state.replay){
+            const item = this.state.commentItem
+            const userId = this.props.navigation.getParam('UserId')
+            const Token = this.props.navigation.getParam('UserToken')
+            const userid = this.props.navigation.getParam('UserId')
+            const commentid = item.commentid
+            const goodsid = item.goodsid
+            const nameid = item.user.id
+            const leaf = item.leaf === null ? '0' : item.id
+            const parentname = item.user.nickname
+            const content = this.state.text
+            axios.post('http://39.106.188.22:8800/api/token/reply/save', {content, userid, commentid, goodsid, nameid, leaf, parentname}, {
+                params: {
+                    token: Token
+                }
+            })
+                .then(response => {
+                    if (userId === '') {
+                        Toast.fail('请先登录', 1)
+                    } else {
+                        if (response.data.code === 0) {
+                            this.getDetail()
+                            this.setState({
+                                keyboard: false,
+                            })
+                        } else {
+                            Toast.fail('回复失败',1)
+                        }
+                    }
+                })
+                .catch(err => console.warn(err));
+        }
+    }
+
+    replayComment = (item) => {
+        this.setState({
+            keyboard: true,
+            replay:true,
+            commentItem : item
         })
     }
 
@@ -225,9 +427,10 @@ export default class ProductDetail extends Component {
                         </Carousel>
                         <View style={{backgroundColor: '#FFFFFF'}}>
                             <View style={{flexDirection: 'row', alignItems: 'center',}}>
-                                <Text style={{fontSize: 15, color: 'red', margin: 15, flex: 4}}>
+                                <Text style={{fontSize: 15, color: 'red', margin: 15}}>
                                     ￥<Text style={{fontSize: 20}}>{detail.price1}</Text>
                                 </Text>
+                                <View style={{flex: 1}}/>
                                 <TouchableOpacity onPress={() => this.Heart()}>
                                     <Image
                                         ref={(ref) => this.heart = ref}
@@ -240,7 +443,7 @@ export default class ProductDetail extends Component {
                                         }}
                                     />
                                 </TouchableOpacity>
-                                <Text style={{flex: 1}}>
+                                <Text style={{marginRight: 15}}>
                                     {this.state.detail.code === true ? <Text>取消收藏</Text> : <Text>收藏</Text>}
                                 </Text>
                             </View>
@@ -283,7 +486,11 @@ export default class ProductDetail extends Component {
                         </View>
                         <View style={{backgroundColor: '#FFFFFF', marginTop: 10}}>
                             <Text
-                                style={{fontWeight: 'bold', fontSize: 15, margin: '3%'}}>全部留言&nbsp;&nbsp;x&nbsp;3
+                                style={{
+                                    fontWeight: 'bold',
+                                    fontSize: 15,
+                                    margin: '3%'
+                                }}>全部留言&nbsp;&nbsp;x&nbsp;{this.state.detail.commentNum}
                             </Text>
                             <View>
                                 {this._renderMessage(messageList)}
@@ -291,15 +498,61 @@ export default class ProductDetail extends Component {
                         </View>
                     </View>
                 </ScrollView>
-                <ActionButton
-                    buttonColor="#36B7AB"
-                    onPress={() => {
-                        alert('你点了我！')
-                    }}
-                    renderIcon={() => (<View><Icon name="form" style={{padding: 2, color: '#FFFFFF'}}/>
-                        <Text style={{color: '#FFFFFF'}}>留言</Text>
-                    </View>)}
-                />
+                {
+                    this.state.keyboard === false ?
+                        <ActionButton
+                            buttonColor="#36B7AB"
+                            onPress={() => {
+                                this.setState({
+                                    keyboard: true,
+                                    comment:true
+                                })
+                            }}
+                            renderIcon={() => (<View><Icon name="form" style={{padding: 2, color: '#FFFFFF'}}/>
+                                <Text style={{color: '#FFFFFF'}}>留言</Text>
+                            </View>)}
+                        /> : <View/>
+                }
+
+                {this.state.keyboard === true ?
+                    <View style={{backgroundColor: '#FFFFFF', flexDirection: 'row'}}>
+                        <View style={{margin: 8}}>
+                            <Image source={{uri: this.props.navigation.getParam('UserImage')}} style={{width: 30, height: 30}}/>
+                        </View>
+                        <TextInput
+                            style={{
+                                width: '70%',
+                                backgroundColor: '#F5F5F5',
+                                borderRadius: 15,
+                                height: 38,
+                                margin: 5,
+                                paddingLeft: 13,
+                            }}
+                            onChangeText={(text) =>
+                                this.setState({
+                                    text
+                                })
+                            }
+                            autoFocus={true}
+                            placeholder='你想说什么，告诉我吧！'
+                            onBlur={() => this.setState({
+                                keyboard: false,
+                            })}
+                        />
+                        <TouchableOpacity onPress={() => this.sendComment()}
+                                          style={{
+                                              backgroundColor: '#36B7AB',
+                                              height: 25,
+                                              width: 50,
+                                              margin: 5,
+                                              alignItems: 'center',
+                                              marginTop: 10
+                                          }}
+                        >
+                            <Text style={{color: '#FFFFFF'}}>发送</Text>
+                        </TouchableOpacity>
+                    </View>
+                    : <View/>}
             </View>
         )
     }
