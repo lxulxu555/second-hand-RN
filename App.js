@@ -1,5 +1,5 @@
 import React,{Component} from 'react'
-import Home from './src/page/home'
+import Home from './src/page/home/home'
 import User from './src/page/user/user'
 import {Icon,Provider} from '@ant-design/react-native'
 import ClassiFication from './src/page/classification'

@@ -9,36 +9,53 @@ import {
     ToastAndroid,
     TouchableOpacity,
     ScrollView,
-    TextInput,
+    TextInput, BackHandler,
 } from 'react-native'
-import {reqIdDetail} from '../../api/index'
+import {reqIdDetail, reqDeleteProduct} from '../../api/index'
 import {ImageViewer} from 'react-native-image-zoom-viewer'
 import {Carousel, Icon, Toast, Grid} from '@ant-design/react-native'
 import ActionButton from 'react-native-action-button'
-
-const RNFS = require('react-native-fs'); //文件处理
 import CameraRoll from "@react-native-community/cameraroll";
 import axios from "axios";
+import CustomAlertDialog from "../../utils/CustomAlertDialog";
+
+const RNFS = require('react-native-fs'); //文件处理
+let that;
+
+const NoUserArr = ["举报"];
+const IsUserArr = ["管理"];
 
 
 export default class ProductDetail extends Component {
 
-    state = {
-        detail: {},
-        images: [],
-        messageList: [],
-        isImageShow: false,
-        index: 0,
-        keyboard: false,
-        text: '',
-        replay:false,
-        comment:false,
-        commentItem : {}
+
+    constructor(props) {
+        super(props);
+        that = this;
+        this.state = ({
+            detail: {},
+            images: [],
+            messageList: [],
+            isImageShow: false,
+            index: 0,
+            keyboard: false,
+            text: '',
+            replay: false,
+            comment: false,
+            commentItem: {},
+            ImageVisible: false,
+        })
+    }
+
+    Modal = () => {
+        this.setState({
+            ImageVisible: true
+        })
     }
 
     getDetail = async () => {
         const id = this.props.navigation.getParam('ProductId')
-        const userid = this.props.navigation.getParam('UserId')
+        const userid = this.props.navigation.getParam('User').id
         const result = await reqIdDetail(id, userid)
         const commentList = result.commentList
         const images = result.images.split(',')
@@ -56,7 +73,7 @@ export default class ProductDetail extends Component {
         const images = this.state.images || []
         return images.map((item, index) => {
             return (
-                <TouchableHighlight onPress={() => this._OpenImage(index)}>
+                <TouchableHighlight onPress={() => this._OpenImage(index)} key={index}>
                     <View style={{height: 400}}>
                         <Image
                             source={{uri: item.url}}
@@ -118,7 +135,7 @@ export default class ProductDetail extends Component {
         const userId = this.props.navigation.getParam('UserId')
         const Token = this.props.navigation.getParam('UserToken')
         const goodsId = this.state.detail.id
-        axios.post('http://39.106.188.22:8800/api/token/collect/save', {userId, goodsId}, {
+        axios.post('http://47.93.240.205:8800/api/token/collect/save', {userId, goodsId}, {
             params: {
                 token: Token
             }
@@ -156,7 +173,7 @@ export default class ProductDetail extends Component {
         const userId = this.props.navigation.getParam('UserId')
         const type = comment.leaf === null ? 'comment' + ':' + comment.commentid + ':' + userId : 'reply' + ':' + comment.id + ':' + userId
         const state = comment.state === null ? '1' : '0'
-        axios.post('http://39.106.188.22:8800/api/token/like/save', {type, state}, {
+        axios.post('http://47.93.240.205:8800/api/token/like/save', {type, state}, {
             params: {
                 token: Token
             }
@@ -199,13 +216,26 @@ export default class ProductDetail extends Component {
                             onPress={() => this.replayComment(item)}
                         >
                             <View style={{flexDirection: 'row'}}>
+                                <TouchableOpacity  activeOpacity={0.6}
+                                                   style={{borderBottomWidth: 0.8, borderColor: '#F5F5F5'}}
+                                                   onPress={() => this.goMyUser(item)}>
                                 <Image source={{uri: item.user.img}}
                                        style={{width: 35, height: 35, borderRadius: 20, marginLeft: 10}}/>
-                                <Text style={{
+                                </TouchableOpacity>
+                                {item.leaf === null ? (
+                                    <Text style={{
+                                        paddingTop: 10,
+                                        marginLeft: 10,
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {item.user.nickname}
+                                    </Text>) : <Text style={{
                                     paddingTop: 10,
                                     marginLeft: 10,
                                     fontWeight: 'bold'
-                                }}>{item.user.nickname}</Text>
+                                }}>
+                                    {item.user.nickname}回复@{item.parentname}
+                                </Text>}
                                 <View style={{flex: 1}}/>
                                 <TouchableOpacity
                                     style={{marginRight: 10}}
@@ -222,7 +252,7 @@ export default class ProductDetail extends Component {
                                             marginTop: 10,
                                             tintColor: item.state === null ? 'black' : 'red'
                                         }}
-                                        source={require('../../../resources/images/点赞.png')}
+                                        source={require('../../../android/app/src/main/res/drawable-hdpi/like.png')}
                                     />
                                 </TouchableOpacity>
                                 <Text style={{marginRight: 15, marginTop: 10}}>{item.number}</Text>
@@ -238,13 +268,16 @@ export default class ProductDetail extends Component {
                 )
             } else {
                 return (
-                    <View>
+                    <View key={item.leaf === null ? item.commentid : item.id}>
                         <TouchableOpacity
                             activeOpacity={0.8}
                             style={{borderBottomWidth: 0.8, borderColor: '#F5F5F5'}}
                             onPress={() => this.replayComment(item)}
                         >
                             <View style={{flexDirection: 'row'}}>
+                                <TouchableOpacity  activeOpacity={0.6}
+                                                   style={{borderBottomWidth: 0.8, borderColor: '#F5F5F5'}}
+                                                   onPress={() => this.goMyUser(item)}>
                                 <Image source={{uri: item.user.img}}
                                        style={{
                                            width: 35,
@@ -253,13 +286,23 @@ export default class ProductDetail extends Component {
                                            marginLeft: 10,
                                            marginTop: 10,
                                        }}/>
-                                <Text style={{
+                                </TouchableOpacity>
+                                <View style={{flexDirection:'row'}}>
+                                {item.leaf === null ? (
+                                    <Text style={{
+                                        paddingTop: 10,
+                                        marginLeft: 10,
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {item.user.nickname}
+                                    </Text>) : <Text style={{
                                     paddingTop: 10,
                                     marginLeft: 10,
-                                    fontWeight: 'bold',
+                                    fontWeight: 'bold'
                                 }}>
-                                    {item.user.nickname}
-                                </Text>
+                                    {item.user.nickname}回复@{item.parentname}
+                                </Text>}
+                                </View>
                                 <View style={{flex: 1}}/>
                                 <TouchableOpacity
                                     style={{marginRight: 10}}
@@ -276,7 +319,7 @@ export default class ProductDetail extends Component {
                                             marginTop: 10,
                                             tintColor: item.state === null ? 'black' : 'red'
                                         }}
-                                        source={require('../../../resources/images/点赞.png')}
+                                        source={require('../../../android/app/src/main/res/drawable-hdpi/like.png')}
                                     />
                                 </TouchableOpacity>
                                 <Text
@@ -303,13 +346,21 @@ export default class ProductDetail extends Component {
         })
     }
 
+    goMyUser = (item) => {
+        this.props.navigation.push('MyUser',{
+            type : 'productDetail',
+            id : item.user.id,
+            UserToken : this.props.navigation.getParam('UserToken')
+        })
+    }
+
     sendComment = () => {
-        if(this.state.comment){
+        if (this.state.comment) {
             const content = this.state.text
-            const userid = this.props.navigation.getParam('UserId')
+            const userid = this.props.navigation.getParam('User').id
             const goodsid = this.props.navigation.getParam('ProductId')
             const Token = this.props.navigation.getParam('UserToken')
-            axios.post('http://39.106.188.22:8800/api/token/comment/save', {content, userid, goodsid}, {
+            axios.post('http://47.93.240.205:8800/api/token/comment/save', {content, userid, goodsid}, {
                 params: {
                     token: Token
                 }
@@ -327,24 +378,24 @@ export default class ProductDetail extends Component {
                     }
                 })
                 .catch(err => console.warn(err));
-        } else if(this.state.replay){
+        } else if (this.state.replay) {
+            const replay = {}
             const item = this.state.commentItem
-            const userId = this.props.navigation.getParam('UserId')
             const Token = this.props.navigation.getParam('UserToken')
-            const userid = this.props.navigation.getParam('UserId')
-            const commentid = item.commentid
-            const goodsid = item.goodsid
-            const nameid = item.user.id
-            const leaf = item.leaf === null ? '0' : item.id
-            const parentname = item.user.nickname
-            const content = this.state.text
-            axios.post('http://39.106.188.22:8800/api/token/reply/save', {content, userid, commentid, goodsid, nameid, leaf, parentname}, {
+            replay.userid = this.props.navigation.getParam('User').id
+            replay.commentid = item.commentid
+            replay.goodsid = item.goodsid
+            replay.nameid = item.user.id
+            replay.leaf = item.leaf === null ? '0' : item.id
+            replay.parentname = item.user.nickname
+            replay.content = this.state.text
+            axios.post('http://47.93.240.205:8800/api/token/reply/save', replay, {
                 params: {
                     token: Token
                 }
             })
                 .then(response => {
-                    if (userId === '') {
+                    if (replay.userid === '') {
                         Toast.fail('请先登录', 1)
                     } else {
                         if (response.data.code === 0) {
@@ -353,7 +404,7 @@ export default class ProductDetail extends Component {
                                 keyboard: false,
                             })
                         } else {
-                            Toast.fail('回复失败',1)
+                            Toast.fail('回复失败', 1)
                         }
                     }
                 })
@@ -364,9 +415,40 @@ export default class ProductDetail extends Component {
     replayComment = (item) => {
         this.setState({
             keyboard: true,
-            replay:true,
-            commentItem : item
+            replay: true,
+            comment: false,
+            commentItem: item
         })
+    }
+
+    detailProduct = async () => {
+        const id = this.state.detail.id
+        const result = await reqDeleteProduct(id)
+        if (result.code === 0) {
+            Toast.success('删除成功', 1)
+        } else {
+            Toast.fail(result.msg, 1)
+        }
+        this.props.navigation.goBack()
+        this.props.navigation.state.params.refresh();
+    }
+
+    settingProduct = () => {
+        this.props.navigation.push('SendProduct', {
+            type: 'setting',
+            detail: this.state.detail,
+            refresh: () => {
+                this.getDetail();
+            },
+        })
+    }
+
+    onBackAndroid = () => {
+        if(this.props.navigation.navigate('type') === 'HomeDetail'){
+            this.props.navigation.state.params.refresh();
+        }else if(this.props.navigation.navigate('type') === 'MyUserDetai'){
+            this.props.navigation.state.params.refresh();
+        }
     }
 
     componentDidMount() {
@@ -374,6 +456,7 @@ export default class ProductDetail extends Component {
     }
 
     componentWillMount() {
+        BackHandler.addEventListener('hardwareBackPress', this.onBackAndroid)
         this._navListener = this.props.navigation.addListener('didFocus', () => {
             StatusBar.setTranslucent(true)
             StatusBar.setBackgroundColor('rgba(0, 0, 0, 0)')
@@ -381,6 +464,7 @@ export default class ProductDetail extends Component {
     }
 
     componentWillUnmount() {
+        BackHandler.removeEventListener('hardwareBackPress', this.onBackAndroid);
         this._navListener.remove();
     }
 
@@ -388,6 +472,9 @@ export default class ProductDetail extends Component {
         const {images, messageList} = this.state
         const detail = this.state.detail || ''
         const user = detail.user || ''
+        const userid = this.props.navigation.getParam('type') === 'MyUserDetai' ?
+            this.props.navigation.getParam('MyUserId') :
+            this.props.navigation.getParam('User').id
         return (
             <View style={{flex: 1}}>
                 <ScrollView style={{backgroundColor: '#F5F5F5'}}>
@@ -434,7 +521,7 @@ export default class ProductDetail extends Component {
                                 <TouchableOpacity onPress={() => this.Heart()}>
                                     <Image
                                         ref={(ref) => this.heart = ref}
-                                        source={require('../../../resources/images/收藏.png')}
+                                        source={require('../../../android/app/src/main/res/drawable-hdpi/collect.png')}
                                         style={{
                                             marginRight: 5,
                                             width: 20,
@@ -459,13 +546,13 @@ export default class ProductDetail extends Component {
                         </View>
                         <View style={{backgroundColor: '#FFFFFF', marginTop: 10}}>
                             <View>
-                                <View style={{flexDirection: 'row', padding: 10}}>
+                                <TouchableOpacity style={{flexDirection: 'row', padding: 10}} onPress={() => this.goMyUser(detail)}>
                                     <Image
                                         source={{uri: user.img}}
                                         style={{width: 40, height: 40, borderRadius: 25}}
                                     />
                                     <Text style={{marginLeft: 10, paddingTop: 10}}>{user.nickname}</Text>
-                                </View>
+                                </TouchableOpacity>
                                 <View style={{flexDirection: 'row', padding: 10}}>
                                     <Icon name='environment' style={{color: '#36B7AB'}}/>
                                     <Text style={{paddingLeft: 10}}>西安欧亚学院</Text>
@@ -500,24 +587,44 @@ export default class ProductDetail extends Component {
                 </ScrollView>
                 {
                     this.state.keyboard === false ?
-                        <ActionButton
-                            buttonColor="#36B7AB"
-                            onPress={() => {
-                                this.setState({
-                                    keyboard: true,
-                                    comment:true
-                                })
-                            }}
-                            renderIcon={() => (<View><Icon name="form" style={{padding: 2, color: '#FFFFFF'}}/>
-                                <Text style={{color: '#FFFFFF'}}>留言</Text>
-                            </View>)}
-                        /> : <View/>
+                        user.id === userid ?
+                            <ActionButton buttonColor="rgba(231,76,60,1)" position='right' verticalOrientation='up'>
+                                <ActionButton.Item buttonColor='#9b59b6' onPress={() => {
+                                    this.setState({
+                                        keyboard: true,
+                                        comment: true,
+                                        replay: false
+                                    })
+                                }}>
+                                    <Text style={{color: '#FFFFFF'}}>留言</Text>
+                                </ActionButton.Item>
+                                <ActionButton.Item buttonColor='#3498db' onPress={() => this.settingProduct()}>
+                                    <Text style={{color: '#FFFFFF'}}>管理</Text>
+                                </ActionButton.Item>
+                                <ActionButton.Item buttonColor='#1abc9c' onPress={() => this.detailProduct()}>
+                                    <Text style={{color: '#FFFFFF'}}>删除</Text>
+                                </ActionButton.Item>
+                            </ActionButton> :
+                            <ActionButton
+                                buttonColor="#36B7AB"
+                                onPress={() => {
+                                    this.setState({
+                                        keyboard: true,
+                                        comment: true,
+                                        replay: false
+                                    })
+                                }}
+                                renderIcon={() => (<View><Icon name="form" style={{padding: 2, color: '#FFFFFF'}}/>
+                                    <Text style={{color: '#FFFFFF'}}>留言</Text>
+                                </View>)}
+                            /> : <View/>
                 }
 
                 {this.state.keyboard === true ?
                     <View style={{backgroundColor: '#FFFFFF', flexDirection: 'row'}}>
                         <View style={{margin: 8}}>
-                            <Image source={{uri: this.props.navigation.getParam('UserImage')}} style={{width: 30, height: 30}}/>
+                            <Image source={{uri: this.props.navigation.getParam('User').img}}
+                                   style={{width: 30, height: 30}}/>
                         </View>
                         <TextInput
                             style={{
@@ -542,17 +649,30 @@ export default class ProductDetail extends Component {
                         <TouchableOpacity onPress={() => this.sendComment()}
                                           style={{
                                               backgroundColor: '#36B7AB',
-                                              height: 25,
                                               width: 50,
-                                              margin: 5,
-                                              alignItems: 'center',
+                                              height: 30,
                                               marginTop: 10
                                           }}
                         >
-                            <Text style={{color: '#FFFFFF'}}>发送</Text>
+                            <Text
+                                style={{
+                                    color: '#FFFFFF',
+                                    height: 30,
+                                    textAlign: 'center',
+                                    textAlignVertical: 'center'
+                                }}>发送</Text>
                         </TouchableOpacity>
                     </View>
                     : <View/>}
+                <CustomAlertDialog
+                    entityList={IsUserArr}
+                    callback={(i) => { //此处i是数组的下标，0也就是打开相机，1打开相册
+                        alert('s')
+                    }} show={this.state.ImageVisible} closeModal={(show) => {
+                    this.setState({
+                        ImageVisible: show
+                    })
+                }}/>
             </View>
         )
     }

@@ -11,17 +11,23 @@ import {
     BackHandler,
     ToastAndroid,
     StatusBar,
-    Dimensions, InteractionManager,
+    Dimensions,
+    TouchableOpacity
 } from 'react-native'
 import {SearchBar, Carousel, Grid, Icon} from '@ant-design/react-native'
 import {createAppContainer} from 'react-navigation';
 import {createStackNavigator, CardStyleInterpolators} from 'react-navigation-stack';
-import ProductDetail from './product/product-detail'
+import ProductDetail from '../product/product-detail'
 import OneClassDetail from './one-class-detail'
+import {EasyLoading, Loading} from "../../utils/Loading";
 
 import ActionButton from 'react-native-action-button'
-import {reqGetAllProduct, reqClassiFication, reqFindProduct} from '../api/index'
+import {reqGetAllProduct, reqClassiFication, reqFindProduct, reqConditionFindProduct} from '../../api/index'
 import SplashScreen from 'react-native-splash-screen'
+import WantBuy from './want-buy'
+import SendProduct from "../user/send-product";
+import MyUser from "../user/my-user";
+
 
 var {width, height} = Dimensions.get('window');
 
@@ -39,13 +45,10 @@ class Home extends Component {
         showFoot: 0, // 控制foot， 0：隐藏footer  1：已加载完成,没有更多数据   2 ：显示加载中
         isLoading: true,
         isTop: false,
-        DataOu: [],
-        DataJi: [],
         waiting: false,//防止多次重复点击
         searchName: '',
-        UserId: '',
         UserToken: '',
-        UserImage:''
+        User : {}
     }
 
     getOneClassFication = async () => {
@@ -54,6 +57,7 @@ class Home extends Component {
             OneClassiFication: result
         }, () => {
             this.getOneClassFicationList()
+            EasyLoading.dismiss()
         })
     }
 
@@ -71,12 +75,12 @@ class Home extends Component {
     }
 
     getAllProduct = async (page) => {
-        let result
-        if (this.state.searchName === '') {
-            result = await reqGetAllProduct('', page, 10, 'create_time desc')
-        } else {
-            result = await reqFindProduct(this.state.searchName)
-        }
+        const condition = {}
+        condition.page = page
+        condition.rows = 10
+        condition.orderBy = 'create_time desc'
+        condition.goodsName = this.state.searchName
+        const result = await reqConditionFindProduct(condition)
 
         totalPage = result.pages
         let data = result.data;
@@ -119,7 +123,7 @@ class Home extends Component {
                     key={item.value.id}
                 >
                     <View style={{
-                        width: '48%',
+                        width: '47%',
                         marginTop: 10,
                         borderRadius: 8,
                         marginLeft: 7,
@@ -138,11 +142,11 @@ class Home extends Component {
                             marginBottom: 5,
                             marginLeft: 8
                         }}>
-                            {/* <Image
+                            <Image
                                 source={{uri: item.value.user.img}}
                                 style={{width: 20, height: 20, borderRadius: 20, marginRight: 10}}
                             />
-                            <Text>{item.value.user.username}</Text>*/}
+                            <Text>{item.value.user.nickname}</Text>
                         </View>
                     </View>
                 </TouchableNativeFeedback>
@@ -151,11 +155,19 @@ class Home extends Component {
     }
 
     _PressList = (product) => {
-        this.props.navigation.navigate('ProductDetail', {
+        this.props.navigation.push('ProductDetail', {
+            type : 'HomeDetail',
             ProductId: product.value.id,
-            UserId: this.state.UserId,
+            User: this.state.User,
             UserToken: this.state.UserToken,
-            UserImage : this.state.UserImage
+            refresh: () => {
+                page = 1;//当前第几页
+                totalPage = 0;//总的页数
+                this.setState({
+                    AllProduct: []
+                })
+                this.getAllProduct(page);
+            },
         })
         this.setState({waiting: true});
         setTimeout(() => {
@@ -163,63 +175,6 @@ class Home extends Component {
         }, 1000)
     }
 
-    /*  AllProductList = () => {
-          const AllProduct = this.state.AllProduct || []
-          let DataOu = []
-          let DataJi = []
-
-          return AllProduct.map((item,index) => {
-              if(index % 2 === 0){
-                  DataOu.push(
-                      item
-                  )
-              }else{
-                  DataJi.push(
-                      item
-                  )
-              }
-              this.setState({
-                  DataOu,
-                  DataJi
-              })
-          })
-      }*/
-
-    /*getOu = () => {
-        const DataOu = this.state.DataOu || []
-       return  DataOu.map(item=>{
-           const images = item.value.images.split(",")[0]
-           return (
-                <Card style={{width:'48%',marginTop: 10, borderRadius: 15, marginLeft: 7}} key={item.value.id}>
-                    <Card.Header
-                        thumbStyle={{width: '100%', height: 200}}
-                        thumb={images}>
-                    </Card.Header>
-                    <Card.Body>
-                        <View style={{height: 42}}>
-                            <Text style={{marginLeft: 10, fontWeight: 'bold'}}>{item.value.name}</Text>
-                            <Text style={{color: 'red', marginLeft: 10, fontSize: 20, marginTop: 5}}><Text
-                                style={{fontSize: 12}}>￥</Text>{item.value.price1}</Text>
-                        </View>
-
-                    </Card.Body>
-                    <Card.Footer
-                        style={{marginTop: 10}}
-                        content={
-                            <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
-                                <Image
-                                    source={{uri: item.value.user.img}}
-                                    style={{width: 20, height: 20, borderRadius: 20, marginRight: 10}}
-                                />
-                                <Text>{item.value.user.username}</Text>
-                            </View>
-                        }
-                    />
-                </Card>
-            )
-        })
-
-    }*/
 
     _onRefresh = () => {
         this.search.state.value = ''
@@ -338,8 +293,7 @@ class Home extends Component {
             // 也没有办法“变成”同步返回
             // 你也可以使用“看似”同步的async/await语法
             this.setState({
-                UserId: ret.id,
-                UserImage : ret.img
+               User:ret
             })
         })
         /*.catch(err => {
@@ -389,21 +343,27 @@ class Home extends Component {
     }
 
     componentDidMount() {
-        InteractionManager.runAfterInteractions(() => {
-            this.getOneClassFication()
-            this.getAllProduct(page)
-        });
+        EasyLoading.show()
+        this.getOneClassFication()
+        this.getAllProduct(page)
         page = 1;//当前第几页
         totalPage = 0;//总的页数
         setTimeout(() => {
             SplashScreen.hide()
-        }, 1000)
-        this._navListener = this.props.navigation.addListener("didFocus", () => {
+        },2000)
+        this._navListener = this.props.navigation.addListener('didFocus', () => {
+            if(this.props.navigation.getParam('type') === 'SendProduct'){
+                this.setState({AllProduct: [], searchName: ''});
+                page = 1;//当前第几页
+                totalPage = 0;//总的页数
+                this.getAllProduct()
+            }
             this._readData()
+            StatusBar.setTranslucent(false)
             StatusBar.setBarStyle("dark-content"); //状态栏文字颜色
-            StatusBar.setTranslucent(true)
             StatusBar.setBackgroundColor("#ffffff"); //状态栏背景色
-        });
+        })
+
     }
 
 
@@ -415,7 +375,8 @@ class Home extends Component {
     render() {
         const Onedata = this.state.Onedata || []
         return (
-            <View style={{flex: 1, marginTop: 20}}>
+            <View style={{flex: 1}}>
+                <Loading/>
                 <SearchBar
                     value={this.state.searchName}
                     ref={(search) => this.search = search}
@@ -472,7 +433,9 @@ class Home extends Component {
                         data={Onedata}
                         hasLine={false}
                         onPress={(_el) => this.props.navigation.push('OneClassDetail', {
-                            OneClassId: _el.id
+                            OneClassId: _el.id,
+                            User: this.state.User,
+                            UserToken: this.state.UserToken,
                         })}
                     />
                     <Text style={{paddingLeft: 10}}>
@@ -482,54 +445,74 @@ class Home extends Component {
 
                     <View style={style.flex}>
                         <View style={style.SchoolHotBg}>
-                            <Text style={style.SchoolHotTitle}>学生兼职</Text>
-                            <Text style={style.SchoolHotDescribe}>校园兼职</Text>
-                            <View style={{paddingLeft: 120, marginTop: -20}}>
+                            <View style={{flexDirection: 'column'}}>
+                                <Text style={style.SchoolHotTitle}>学生兼职</Text>
+                                <Text style={style.SchoolHotDescribe}>校园兼职</Text>
+                                <View style={{flex: 1}}/>
+                                <Text style={style.SchoolClickLook}>点击查看 ></Text>
+                            </View>
+                            <View style={{flex: 1}}/>
+                            <View style={{marginTop: '23%'}}>
                                 <Image
-                                    source={require('../../resources/images/外块兼职.png')}
+                                    source={require('../../../android/app/src/main/res/drawable-hdpi/sendjob.png')}
                                     style={{width: 70, height: 77}}
                                 />
                             </View>
-                            <Text style={style.SchoolClickLook}>点击查看 ></Text>
                         </View>
                         <View style={style.SchoolHotBg}>
-                            <Text style={style.SchoolHotTitle}>查看求购</Text>
-                            <Text style={style.SchoolHotDescribe}>卖你想卖</Text>
-                            <View style={{paddingLeft: 120, marginTop: -13}}>
+                            <TouchableOpacity style={{flexDirection: 'column'}} activeOpacity={0.6}
+                                              onPress={() => this.props.navigation.push('WantBuy', {
+                                                  UserToken: this.state.UserToken,
+                                              })}>
+                                <Text style={style.SchoolHotTitle}>查看求购</Text>
+                                <Text style={style.SchoolHotDescribe}>卖你想卖</Text>
+                                <View style={{flex: 1}}/>
+                                <Text style={style.SchoolClickLook}>点击查看 ></Text>
+                            </TouchableOpacity>
+                            <View style={{flex: 1}}/>
+                            <View style={{marginTop: '23%'}}>
                                 <Image
-                                    source={require('../../resources/images/求购.png')}
+                                    source={require('../../../android/app/src/main/res/drawable-hdpi/wantbuy.png')}
                                     style={{width: 70, height: 70}}
                                 />
                             </View>
-                            <Text style={style.SchoolClickLook}>点击查看 ></Text>
                         </View>
                         <View style={style.SchoolHotBg}>
-                            <Text style={style.SchoolHotTitle}>学生兼职</Text>
-                            <Text style={style.SchoolHotDescribe}>校园兼职</Text>
-                            <View style={{paddingLeft: 120, marginTop: -20}}>
+                            <View style={{flexDirection: 'column'}}>
+                                <Text style={style.SchoolHotTitle}>学生兼职</Text>
+                                <Text style={style.SchoolHotDescribe}>校园兼职</Text>
+                                <View style={{flex: 1}}/>
+                                <Text style={style.SchoolClickLook}>点击查看 ></Text>
+
+                            </View>
+                            <View style={{flex: 1}}/>
+                            <View style={{marginTop: '23%'}}>
                                 <Image
-                                    source={require('../../resources/images/外块兼职.png')}
+                                    source={require('../../../android/app/src/main/res/drawable-hdpi/sendjob.png')}
                                     style={{width: 70, height: 77}}
                                 />
                             </View>
-                            <Text style={style.SchoolClickLook}>点击查看 ></Text>
                         </View>
                         <View style={style.SchoolHotBg}>
-                            <Text style={style.SchoolHotTitle}>校园热点</Text>
-                            <Text style={style.SchoolHotDescribe}>Eurasia热点</Text>
-                            <View style={{paddingLeft: 120, marginTop: -10}}>
+                            <View style={{flexDirection: 'column'}}>
+                                <Text style={style.SchoolHotTitle}>校园热点</Text>
+                                <Text style={style.SchoolHotDescribe}>Eurasia热点</Text>
+                                <View style={{flex: 1}}/>
+                                <Text style={style.SchoolClickLook}>点击查看 ></Text>
+                            </View>
+                            <View style={{flex: 1}}/>
+                            <View style={{marginTop: '23%'}}>
                                 <Image
-                                    source={require('../../resources/images/热点.png')}
+                                    source={require('../../../android/app/src/main/res/drawable-hdpi/hot.png')}
                                     style={{width: 65, height: 70}}
                                 />
                             </View>
-                            <Text style={style.SchoolClickLook}>点击查看 ></Text>
                         </View>
                     </View>
                     <Text style={{paddingLeft: 10}}>
                         <Image
                             style={{width: 30, height: 30}}
-                            source={require('../../resources/images/猜您喜欢.png')}
+                            source={require('../../../android/app/src/main/res/drawable-hdpi/youlike.png')}
                         />
                         猜您喜欢
                     </Text>
@@ -584,8 +567,9 @@ const style = StyleSheet.create({
         borderRadius: 18,
         marginLeft: 7,
         height: 145,
-        width: '48%',
-        marginTop: 10
+        width: '47%',
+        marginTop: 10,
+        flexDirection: 'row',
     },
     SchoolHotTitle: {
         fontWeight: 'bold',
@@ -630,10 +614,32 @@ const HomeNavigator = createStackNavigator({
         OneClassDetail: {
             screen: OneClassDetail,
             navigationOptions: {
-                header: null,
                 cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
             },
         },
+        WantBuy: {
+            screen: WantBuy,
+            navigationOptions: {
+                cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
+            },
+        },
+        SendProduct: {
+            screen: SendProduct,
+            navigationOptions: {
+                title: '发布商品',
+            },
+        },
+        MyUser : {
+            screen : MyUser,
+            navigationOptions: {
+                headerTransparent: true, // 背景透明
+                title: null,
+                headerTintColor: '#36B7AB',
+                headerStyle: {
+                    elevation: 0,  //去除安卓手机header的样式
+                },
+            },
+        }
     },
     {
         initialRouteName: 'Home',

@@ -43,6 +43,10 @@ target 'EuraisaSecond' do
 
   pod 'RNCAsyncStorage', :path => '../node_modules/@react-native-community/async-storage'
 
+  pod 'react-native-blur', :path => '../node_modules/@react-native-community/blur'
+
+  pod 'react-native-viewpager', :path => '../node_modules/@react-native-community/viewpager'
+
   target 'EuraisaSecondTests' do
     inherit! :search_paths
     # Pods for testing

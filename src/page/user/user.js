@@ -18,6 +18,12 @@ import Mycollect from './my-collect'
 import UpdateUser from './update-user'
 import Nickname from './nick-name'
 import ForGetPwd from './forget-pwd'
+import SendProduct from './send-product'
+import SendWantBuy from './send-want-buy'
+import MyUser from './my-user'
+import ProductDetail from "../product/product-detail";
+import Fans from './fans'
+import LikeUser from './like-user'
 
 
 class User extends Component {
@@ -33,7 +39,7 @@ class User extends Component {
                 <Icon
                     name='setting'
                     style={{marginRight: 20, color: '#FFFFFF'}}
-                    onPress={() => props.navigation.navigate('Setting')}
+                    onPress={() => props.navigation.push('Setting')}
                 />
             ),
         }
@@ -71,7 +77,7 @@ class User extends Component {
         }).catch(err => {
             //如果没有找到数据且没有sync方法，
             //或者有其他异常，则在catch中返回
-            this.props.navigation.navigate('Login')
+            this.props.navigation.push('Login')
         })
         storage.load({
             key: 'UserToken',
@@ -103,13 +109,14 @@ class User extends Component {
         }).catch(err => {
             //如果没有找到数据且没有sync方法，
             //或者有其他异常，则在catch中返回
-            this.props.navigation.navigate('Login')
+            this.props.navigation.push('Login')
         })
     }
 
     componentDidMount() {
         this._navListener = this.props.navigation.addListener('didFocus', () => {
             this._readData()
+            StatusBar.setTranslucent(true)
             StatusBar.setBarStyle('light-content'); //状态栏文字颜色
             StatusBar.setBackgroundColor('#36B7AB'); //状态栏背景色
         });
@@ -130,13 +137,24 @@ class User extends Component {
                 <ScrollView>
                     <ImageBackground style={{width: '100%', height: 150, backgroundColor: '#36B7AB'}}>
                         <View style={{flexDirection: 'row'}}>
+                            <TouchableOpacity onPress={() => this.props.navigation.push('MyUser',{
+                                id: this.state.UserData.id,
+                                UserToken : this.state.UserToken,
+                            })} activeOpacity={0.6}>
                             <Image
                                 source={{uri: UserData.img === '' ? 'https://dss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=4147505531,1886811031&fm=26&gp=0.jpg' : UserData.img}}
                                 style={{width: 100, height: 100, borderRadius: 10, margin: 20}}
                             />
+                            </TouchableOpacity>
                             <View style={{flexDirection: 'column'}}>
                                 <Text style={{fontSize: 20, marginTop: 18}}>{UserData.username}</Text>
                                 <Text style={{marginTop: 10}}>昵称:<Text>{UserData.nickname}</Text></Text>
+                                <TouchableOpacity style={{backgroundColor:'#F5F5F5',marginTop:10,borderRadius:10,alignItems:'center'}} onPress={() => this.props.navigation.push('MyUser',{
+                                    id: this.state.UserData.id,
+                                    UserToken : this.state.UserToken,
+                                })} activeOpacity={0.6}>
+                                <Text style={{fontSize:12}}>个人主页></Text>
+                                </TouchableOpacity>
                             </View>
                         </View>
                     </ImageBackground>
@@ -155,11 +173,14 @@ class User extends Component {
                             <Text style={{textAlign: 'center'}}>1与我相关</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={{fontSize: 15, borderRightWidth: 0.5, flex: 1}}
-                                          onPress={() => alert('s')}>
+                                          onPress={() => this.props.navigation.push('LikeUser',{
+                                              id : this.state.UserData.id,
+                                              Token : this.state.UserToken
+                                          })}>
                             <Text style={{textAlign: 'center'}}>4关注</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={{fontSize: 15, flex: 1}} onPress={() => {
-                            this.props.navigation.navigate('Login')
+                            this.props.navigation.push('Fans')
                         }}>
                             <Text style={{textAlign: 'center'}}>10粉丝</Text>
                         </TouchableOpacity>
@@ -174,29 +195,35 @@ class User extends Component {
                         paddingTop:20,
                         paddingBottom:20,
                     }}>
-                        <TouchableOpacity style={{flex:1,alignItems: 'center'}} onPress={() => this.props.navigation.navigate('Mycollect',{
+                        <TouchableOpacity style={{flex:1,alignItems: 'center'}} onPress={() => this.props.navigation.push('Mycollect',{
                             UserToken: this.state.UserToken,
                             UserData: this.state.UserData,
                         })}>
                             <Image
-                                source={require('../../../resources/images/我的收藏.png')}
+                                source={require('../../../android/app/src/main/res/drawable-hdpi/mycollect.png')}
                                 style={{height:35,width:35}}
                             />
                             <Text style={{marginTop:8}}>我收藏的</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={{flex:1,alignItems: 'center'}}>
+                        <TouchableOpacity style={{flex:1,alignItems: 'center'}} onPress={() =>  this.props.navigation.push('SendProduct',{
+                            UserId: this.state.UserData.id,
+                            type : 'send'
+                        })}>
                             <Image
-                                source={require('../../../resources/images/我的收藏.png')}
-                                style={{height:35,width:35}}
+                                source={require('../../../android/app/src/main/res/drawable-hdpi/sendproduct.png')}
+                                style={{height:35,width:35,tintColor:'blue'}}
                             />
-                            <Text style={{marginTop:8}}>我的收藏</Text>
+                            <Text style={{marginTop:8}}>发布商品</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={{flex:1,alignItems: 'center'}}>
+                        <TouchableOpacity style={{flex:1,alignItems: 'center'}}  onPress={() =>  this.props.navigation.push('SendWantBuy',{
+                            UserId: this.state.UserData.id,
+                            UserToken : this.state.UserToken
+                        })}>
                             <Image
-                                source={require('../../../resources/images/我的收藏.png')}
-                                style={{height:35,width:35}}
+                                source={require('../../../android/app/src/main/res/drawable-hdpi/sendwantbuy.png')}
+                                style={{height:35,width:35,tintColor:'green'}}
                             />
-                            <Text style={{marginTop:8}}>我的收藏</Text>
+                            <Text style={{marginTop:8}}>发布求购</Text>
                         </TouchableOpacity>
                     </View>
                     </View>
@@ -213,6 +240,15 @@ const AppNavigator = createStackNavigator({
         navigationOptions: {
             headerTransparent: true, // 背景透明
             title: null,
+        },
+    },
+    ProductDetail: {
+        screen: ProductDetail,
+        navigationOptions: {
+            headerTransparent: true, // 背景透明
+            cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
+            title: null,
+            headerTintColor: '#36B7AB',
         },
     },
     Login: {
@@ -257,6 +293,49 @@ const AppNavigator = createStackNavigator({
         screen : ForGetPwd,
         navigationOptions: {
             title: null,
+        },
+    },
+    SendProduct : {
+        screen : SendProduct,
+        navigationOptions: {
+            title: '发布商品',
+        },
+    },
+    SendWantBuy : {
+        screen : SendWantBuy,
+        navigationOptions: {
+            title: '发布求购',
+            headerStyle: {
+                elevation: 0,  //去除安卓手机header的样式
+            },
+        },
+    },
+    MyUser : {
+        screen : MyUser,
+        navigationOptions: {
+            headerTransparent: true, // 背景透明
+            title: null,
+            headerTintColor: '#36B7AB',
+            headerStyle: {
+                elevation: 0,  //去除安卓手机header的样式
+            },
+        },
+    },
+    Fans : {
+        screen : Fans,
+        navigationOptions: {
+            headerStyle: {
+                elevation: 0,  //去除安卓手机header的样式
+            },
+        },
+    },
+    LikeUser : {
+        screen : LikeUser,
+        navigationOptions: {
+            title:'我关注的',
+            headerStyle: {
+                elevation: 0,  //去除安卓手机header的样式
+            },
         },
     }
 }, {
