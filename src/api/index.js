@@ -17,13 +17,13 @@ export const reqUpdateUser = (user) => ajax(BASE + '/user/update',user,'PUT')
 //更新用户头像
 export const reqUpdateHeaderImg = (id,img) => ajax(BASE + '/user/updateImg',{id,img},'PUT')
 //获取验证码
-export const reqVerificationCode = (email) => ajax(BASE + '/user/getEmailCode',{email})
+export const reqVerificationCode = (email) => ajax(BASE + '/user/getEmailCode',email)
 //快速注册
 export const reqQuicklyRegister = (email,code) => ajax(BASE + '/user/registerAndLogin',{email,code})
 //更新用户名
 export const reqUpdateUsername = (id,username) => ajax(BASE + '/user/updateName',{id,username},'PUT')
 //根据邮箱找回密码
-export const reqFindPwd = (password,email,code) => ajax(BASE + '/user/chengePassword',{password,email,code},'POST')
+export const reqFindPwd = (password,email,code) => ajax(BASE + '/user/changePassword',{password,email,code},'POST')
 //查询所有分类
 export const reqAllClass = () => ajax(BASE + '/classify1/findAll')
 //添加商品

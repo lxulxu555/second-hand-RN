@@ -14,16 +14,14 @@ import {
 import {reqIdDetail, reqDeleteProduct} from '../../api/index'
 import {ImageViewer} from 'react-native-image-zoom-viewer'
 import {Carousel, Icon, Toast, Grid} from '@ant-design/react-native'
+import {EasyLoading, Loading} from '../../utils/Loading'
 import ActionButton from 'react-native-action-button'
 import CameraRoll from "@react-native-community/cameraroll";
+import Replay from './replay'
 import axios from "axios";
-import CustomAlertDialog from "../../utils/CustomAlertDialog";
 
 const RNFS = require('react-native-fs'); //文件处理
 let that;
-
-const NoUserArr = ["举报"];
-const IsUserArr = ["管理"];
 
 
 export default class ProductDetail extends Component {
@@ -54,9 +52,10 @@ export default class ProductDetail extends Component {
     }
 
     getDetail = async () => {
-        const id = this.props.navigation.getParam('ProductId')
-        const userid = this.props.navigation.getParam('User').id
-        const result = await reqIdDetail(id, userid)
+        EasyLoading.show('网速有点慢')
+        const userid = this.user.user === {} ? '' : this.user.user.id
+        const goodsid = this.goodsid
+        const result = await reqIdDetail(goodsid, userid)
         const commentList = result.commentList
         const images = result.images.split(',')
         const NewImages = images.map(item => ({
@@ -66,6 +65,8 @@ export default class ProductDetail extends Component {
             detail: result,
             images: NewImages,
             messageList: commentList,
+        }, () => {
+            EasyLoading.dismiss()
         })
     }
 
@@ -132,16 +133,16 @@ export default class ProductDetail extends Component {
 
     Heart = async () => {
         const code = this.state.detail.code
-        const userId = this.props.navigation.getParam('UserId')
-        const Token = this.props.navigation.getParam('UserToken')
+        const Token = this.user.token
         const goodsId = this.state.detail.id
+        const userId = this.user.user.id
         axios.post('http://47.93.240.205:8800/api/token/collect/save', {userId, goodsId}, {
             params: {
                 token: Token
             }
         })
             .then(response => {
-                if (response.data.code === -1) {
+                if (!userId) {
                     Toast.fail('请先登录', 1)
                 } else {
                     if (code === false) {
@@ -168,259 +169,6 @@ export default class ProductDetail extends Component {
             .catch(err => console.warn(err));
     }
 
-    LikeComment = (comment) => {
-        const Token = this.props.navigation.getParam('UserToken')
-        const userId = this.props.navigation.getParam('UserId')
-        const type = comment.leaf === null ? 'comment' + ':' + comment.commentid + ':' + userId : 'reply' + ':' + comment.id + ':' + userId
-        const state = comment.state === null ? '1' : '0'
-        axios.post('http://47.93.240.205:8800/api/token/like/save', {type, state}, {
-            params: {
-                token: Token
-            }
-        })
-            .then(response => {
-                if (userId === '') {
-                    Toast.fail('请先登录', 1)
-                } else {
-                    if (comment.state === null) {
-                        this.Likecomment[comment.leaf === null ? comment.commentid : comment.id].setNativeProps({
-                            style: {
-                                tintColor: 'red'
-                            }
-                        })
-                        comment.state = 1
-                    } else {
-                        this.Likecomment[comment.leaf === null ? comment.commentid : comment.id].setNativeProps({
-                            style: {
-                                tintColor: 'black'
-                            }
-                        })
-                        comment.state = null
-                    }
-                }
-            })
-            .catch(err => console.warn(err));
-    }
-
-    _renderMessage = (MessageList) => {
-        return MessageList.map((item, index) => {
-            if (!item.replyList) {
-                return (
-                    <View
-                        style={{marginLeft: item.leaf === null ? '5%' : '0%'}}
-                        key={item.leaf === null ? item.commentid : item.id}
-                    >
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            style={{borderBottomWidth: 0.8, borderColor: '#F5F5F5'}}
-                            onPress={() => this.replayComment(item)}
-                        >
-                            <View style={{flexDirection: 'row'}}>
-                                <TouchableOpacity  activeOpacity={0.6}
-                                                   style={{borderBottomWidth: 0.8, borderColor: '#F5F5F5'}}
-                                                   onPress={() => this.goMyUser(item)}>
-                                <Image source={{uri: item.user.img}}
-                                       style={{width: 35, height: 35, borderRadius: 20, marginLeft: 10}}/>
-                                </TouchableOpacity>
-                                {item.leaf === null ? (
-                                    <Text style={{
-                                        paddingTop: 10,
-                                        marginLeft: 10,
-                                        fontWeight: 'bold'
-                                    }}>
-                                        {item.user.nickname}
-                                    </Text>) : <Text style={{
-                                    paddingTop: 10,
-                                    marginLeft: 10,
-                                    fontWeight: 'bold'
-                                }}>
-                                    {item.user.nickname}回复@{item.parentname}
-                                </Text>}
-                                <View style={{flex: 1}}/>
-                                <TouchableOpacity
-                                    style={{marginRight: 10}}
-                                    onPress={() => this.LikeComment(item)}
-                                >
-                                    <Image
-                                        ref={(ref) => this.Likecomment = {
-                                            ...this.Likecomment,
-                                            [item.leaf === null ? item.commentid : item.id]: ref
-                                        }}
-                                        style={{
-                                            width: 18,
-                                            height: 18,
-                                            marginTop: 10,
-                                            tintColor: item.state === null ? 'black' : 'red'
-                                        }}
-                                        source={require('../../../android/app/src/main/res/drawable-hdpi/like.png')}
-                                    />
-                                </TouchableOpacity>
-                                <Text style={{marginRight: 15, marginTop: 10}}>{item.number}</Text>
-                            </View>
-                            <Text style={{marginTop: '1%', marginLeft: '13%', marginBottom: '2%'}}>{item.content}</Text>
-                            <Text style={{
-                                marginLeft: '13%',
-                                marginBottom: '1%',
-                                color: '#C0C0C0'
-                            }}>{item.createtime}</Text>
-                        </TouchableOpacity>
-                    </View>
-                )
-            } else {
-                return (
-                    <View key={item.leaf === null ? item.commentid : item.id}>
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            style={{borderBottomWidth: 0.8, borderColor: '#F5F5F5'}}
-                            onPress={() => this.replayComment(item)}
-                        >
-                            <View style={{flexDirection: 'row'}}>
-                                <TouchableOpacity  activeOpacity={0.6}
-                                                   style={{borderBottomWidth: 0.8, borderColor: '#F5F5F5'}}
-                                                   onPress={() => this.goMyUser(item)}>
-                                <Image source={{uri: item.user.img}}
-                                       style={{
-                                           width: 35,
-                                           height: 35,
-                                           borderRadius: 20,
-                                           marginLeft: 10,
-                                           marginTop: 10,
-                                       }}/>
-                                </TouchableOpacity>
-                                <View style={{flexDirection:'row'}}>
-                                {item.leaf === null ? (
-                                    <Text style={{
-                                        paddingTop: 10,
-                                        marginLeft: 10,
-                                        fontWeight: 'bold'
-                                    }}>
-                                        {item.user.nickname}
-                                    </Text>) : <Text style={{
-                                    paddingTop: 10,
-                                    marginLeft: 10,
-                                    fontWeight: 'bold'
-                                }}>
-                                    {item.user.nickname}回复@{item.parentname}
-                                </Text>}
-                                </View>
-                                <View style={{flex: 1}}/>
-                                <TouchableOpacity
-                                    style={{marginRight: 10}}
-                                    onPress={() => this.LikeComment(item)}
-                                >
-                                    <Image
-                                        ref={(ref) => this.Likecomment = {
-                                            ...this.Likecomment,
-                                            [item.leaf === null ? item.commentid : item.id]: ref
-                                        }}
-                                        style={{
-                                            width: 18,
-                                            height: 18,
-                                            marginTop: 10,
-                                            tintColor: item.state === null ? 'black' : 'red'
-                                        }}
-                                        source={require('../../../android/app/src/main/res/drawable-hdpi/like.png')}
-                                    />
-                                </TouchableOpacity>
-                                <Text
-                                    style={{marginRight: 15, marginTop: 10}}
-                                >
-                                    {item.number}
-                                </Text>
-                            </View>
-                            <Text style={{marginTop: '1%', marginLeft: '13%', marginBottom: '2%'}}>{item.content}</Text>
-                            <Text style={{
-                                marginLeft: '13%',
-                                marginBottom: '1%',
-                                color: '#C0C0C0'
-                            }}>{item.createtime}</Text>
-                        </TouchableOpacity>
-                        <View style={{
-                            marginLeft: item.leaf === null ? '8%' : '0%'
-                        }}>
-                            {this._renderMessage(item.replyList)}
-                        </View>
-                    </View>
-                )
-            }
-        })
-    }
-
-    goMyUser = (item) => {
-        this.props.navigation.push('MyUser',{
-            type : 'productDetail',
-            id : item.user.id,
-            UserToken : this.props.navigation.getParam('UserToken')
-        })
-    }
-
-    sendComment = () => {
-        if (this.state.comment) {
-            const content = this.state.text
-            const userid = this.props.navigation.getParam('User').id
-            const goodsid = this.props.navigation.getParam('ProductId')
-            const Token = this.props.navigation.getParam('UserToken')
-            axios.post('http://47.93.240.205:8800/api/token/comment/save', {content, userid, goodsid}, {
-                params: {
-                    token: Token
-                }
-            })
-                .then(response => {
-                    if (userid === '') {
-                        Toast.fail('请先登录', 1)
-                    } else {
-                        if (response.data.code === 0) {
-                            this.getDetail()
-                            this.setState({
-                                keyboard: false,
-                            })
-                        }
-                    }
-                })
-                .catch(err => console.warn(err));
-        } else if (this.state.replay) {
-            const replay = {}
-            const item = this.state.commentItem
-            const Token = this.props.navigation.getParam('UserToken')
-            replay.userid = this.props.navigation.getParam('User').id
-            replay.commentid = item.commentid
-            replay.goodsid = item.goodsid
-            replay.nameid = item.user.id
-            replay.leaf = item.leaf === null ? '0' : item.id
-            replay.parentname = item.user.nickname
-            replay.content = this.state.text
-            axios.post('http://47.93.240.205:8800/api/token/reply/save', replay, {
-                params: {
-                    token: Token
-                }
-            })
-                .then(response => {
-                    if (replay.userid === '') {
-                        Toast.fail('请先登录', 1)
-                    } else {
-                        if (response.data.code === 0) {
-                            this.getDetail()
-                            this.setState({
-                                keyboard: false,
-                            })
-                        } else {
-                            Toast.fail('回复失败', 1)
-                        }
-                    }
-                })
-                .catch(err => console.warn(err));
-        }
-    }
-
-    replayComment = (item) => {
-        this.setState({
-            keyboard: true,
-            replay: true,
-            comment: false,
-            commentItem: item
-        })
-    }
-
     detailProduct = async () => {
         const id = this.state.detail.id
         const result = await reqDeleteProduct(id)
@@ -443,15 +191,70 @@ export default class ProductDetail extends Component {
         })
     }
 
-    onBackAndroid = () => {
-        if(this.props.navigation.navigate('type') === 'HomeDetail'){
-            this.props.navigation.state.params.refresh();
-        }else if(this.props.navigation.navigate('type') === 'MyUserDetai'){
-            this.props.navigation.state.params.refresh();
+    sendComment = () => {
+        if (this.state.comment) {
+            const content = this.state.text
+            const goodsid = this.goodsid
+            const userid = this.user.user.id
+            axios.post('http://47.93.240.205:8800/api/token/comment/save', {content, userid, goodsid}, {
+                params: {
+                    token: this.user.token
+                }
+            })
+                .then(response => {
+                    if (response.data.code === 0) {
+                        this.getDetail()
+                        this.setState({
+                            keyboard: false,
+                        })
+                    }
+                })
+                .catch(err => console.warn(err));
+        } else if (this.state.replay) {
+            const replay = {}
+            const item = this.state.commentItem
+            replay.userid = this.user.user.id
+            replay.commentid = item.commentid
+            replay.goodsid = item.goodsid
+            replay.nameid = item.user.id
+            replay.leaf = item.leaf === null ? '0' : item.id
+            replay.parentname = item.user.nickname
+            replay.content = this.state.text
+            axios.post('http://47.93.240.205:8800/api/token/reply/save', replay, {
+                params: {
+                    token: this.user.token
+                }
+            })
+                .then(response => {
+                    if (response.data.code === 0) {
+                        this.getDetail()
+                        this.setState({
+                            keyboard: false,
+                        })
+                    } else {
+                        Toast.fail('回复失败', 1)
+                    }
+                })
+                .catch(err => console.warn(err));
         }
     }
 
+    callBack = (keyboard,replay,comment,commentItem) => {
+        this.setState({
+            keyboard,
+            replay,
+            comment,
+            commentItem
+        })
+    }
+
+    onBackAndroid = () => {
+        this.props.navigation.state.params.refresh();
+    }
+
     componentDidMount() {
+        this.user = this.props.navigation.getParam('User')
+        this.goodsid = this.props.navigation.getParam('ProductId')
         this.getDetail()
     }
 
@@ -472,11 +275,10 @@ export default class ProductDetail extends Component {
         const {images, messageList} = this.state
         const detail = this.state.detail || ''
         const user = detail.user || ''
-        const userid = this.props.navigation.getParam('type') === 'MyUserDetai' ?
-            this.props.navigation.getParam('MyUserId') :
-            this.props.navigation.getParam('User').id
+        const userid = this.props.navigation.getParam('User').user.id
         return (
             <View style={{flex: 1}}>
+                <Loading/>
                 <ScrollView style={{backgroundColor: '#F5F5F5'}}>
                     {
                         this.state.isImageShow ?
@@ -546,7 +348,8 @@ export default class ProductDetail extends Component {
                         </View>
                         <View style={{backgroundColor: '#FFFFFF', marginTop: 10}}>
                             <View>
-                                <TouchableOpacity style={{flexDirection: 'row', padding: 10}} onPress={() => this.goMyUser(detail)}>
+                                <TouchableOpacity style={{flexDirection: 'row', padding: 10}}
+                                                  onPress={() => this.Replay.goMyUser(detail)}>
                                     <Image
                                         source={{uri: user.img}}
                                         style={{width: 40, height: 40, borderRadius: 25}}
@@ -579,9 +382,13 @@ export default class ProductDetail extends Component {
                                     margin: '3%'
                                 }}>全部留言&nbsp;&nbsp;x&nbsp;{this.state.detail.commentNum}
                             </Text>
-                            <View>
-                                {this._renderMessage(messageList)}
-                            </View>
+                           <Replay
+                               ref={(ref) => this.Replay = ref}
+                               messageList={messageList}
+                               User={this.user}
+                               callBack={this.callBack}
+                               navigation={this.props}
+                           />
                         </View>
                     </View>
                 </ScrollView>
@@ -623,7 +430,7 @@ export default class ProductDetail extends Component {
                 {this.state.keyboard === true ?
                     <View style={{backgroundColor: '#FFFFFF', flexDirection: 'row'}}>
                         <View style={{margin: 8}}>
-                            <Image source={{uri: this.props.navigation.getParam('User').img}}
+                            <Image source={{uri: this.user.user.img}}
                                    style={{width: 30, height: 30}}/>
                         </View>
                         <TextInput
@@ -664,15 +471,7 @@ export default class ProductDetail extends Component {
                         </TouchableOpacity>
                     </View>
                     : <View/>}
-                <CustomAlertDialog
-                    entityList={IsUserArr}
-                    callback={(i) => { //此处i是数组的下标，0也就是打开相机，1打开相册
-                        alert('s')
-                    }} show={this.state.ImageVisible} closeModal={(show) => {
-                    this.setState({
-                        ImageVisible: show
-                    })
-                }}/>
+
             </View>
         )
     }

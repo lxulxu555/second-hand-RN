@@ -15,19 +15,11 @@ import {
     TouchableOpacity
 } from 'react-native'
 import {SearchBar, Carousel, Grid, Icon} from '@ant-design/react-native'
-import {createAppContainer} from 'react-navigation';
-import {createStackNavigator, CardStyleInterpolators} from 'react-navigation-stack';
-import ProductDetail from '../product/product-detail'
-import OneClassDetail from './one-class-detail'
 import {EasyLoading, Loading} from "../../utils/Loading";
 
 import ActionButton from 'react-native-action-button'
-import {reqGetAllProduct, reqClassiFication, reqFindProduct, reqConditionFindProduct} from '../../api/index'
+import {reqGetAllProduct, reqClassiFication, reqConditionFindProduct} from '../../api/index'
 import SplashScreen from 'react-native-splash-screen'
-import WantBuy from './want-buy'
-import SendProduct from "../user/send-product";
-import MyUser from "../user/my-user";
-
 
 var {width, height} = Dimensions.get('window');
 
@@ -35,7 +27,8 @@ let page = 1;//当前第几页
 let totalPage = 0;//总的页数
 
 
-class Home extends Component {
+export default class Home extends Component {
+
 
     state = {
         OneClassiFication: [],
@@ -47,8 +40,7 @@ class Home extends Component {
         isTop: false,
         waiting: false,//防止多次重复点击
         searchName: '',
-        UserToken: '',
-        User : {}
+        User: {}
     }
 
     getOneClassFication = async () => {
@@ -105,7 +97,7 @@ class Home extends Component {
             isLoading: false,
             showFoot: foot,
             isRefreshing: false,
-        }/*,() => this.AllProductList()*/);
+        });
         data = null;
         NewData = null;
     }
@@ -155,24 +147,22 @@ class Home extends Component {
     }
 
     _PressList = (product) => {
-        this.props.navigation.push('ProductDetail', {
-            type : 'HomeDetail',
-            ProductId: product.value.id,
-            User: this.state.User,
-            UserToken: this.state.UserToken,
-            refresh: () => {
-                page = 1;//当前第几页
-                totalPage = 0;//总的页数
-                this.setState({
-                    AllProduct: []
-                })
-                this.getAllProduct(page);
-            },
-        })
-        this.setState({waiting: true});
-        setTimeout(() => {
-            this.setState({waiting: false})
-        }, 1000)
+         this.props.navigation.push('ProductDetail', {
+             ProductId: product.value.id,
+             User: this.state.User,
+             refresh: () => {
+                 page = 1;//当前第几页
+                 totalPage = 0;//总的页数
+                 this.setState({
+                     AllProduct: []
+                 })
+                 this.getAllProduct(page);
+             },
+         })
+         this.setState({waiting: true});
+         setTimeout(() => {
+             this.setState({waiting: false})
+         }, 1000)
     }
 
 
@@ -180,10 +170,13 @@ class Home extends Component {
         this.search.state.value = ''
         this.setState({isRefreshing: true});
         setTimeout(() => {
-            this.setState({isRefreshing: false, AllProduct: [], searchName: ''});
-            page = 1;//当前第几页
-            totalPage = 0;//总的页数
-            this.getAllProduct()
+            this.setState({
+                isRefreshing: false, AllProduct: [], searchName: ''
+            },() => {
+                page = 1;//当前第几页
+                totalPage = 0;//总的页数
+                this.getAllProduct(page)
+            });
         }, 1500);
     }
 
@@ -293,46 +286,15 @@ class Home extends Component {
             // 也没有办法“变成”同步返回
             // 你也可以使用“看似”同步的async/await语法
             this.setState({
-               User:ret
+                User: ret,
             })
-        })
-        /*.catch(err => {
-                    //如果没有找到数据且没有sync方法，
-                    //或者有其他异常，则在catch中返回
-                    this.props.navigation.navigate('Login')
-                })*/
-        storage.load({
-            key: 'UserToken',
-            // autoSync(默认为true)意味着在没有找到数据或数据过期时自动调用相应的sync方法
-            autoSync: true,
-
-            // syncInBackground(默认为true)意味着如果数据过期，
-            // 在调用sync方法的同时先返回已经过期的数据。
-            // 设置为false的话，则等待sync方法提供的最新数据(当然会需要更多时间)。
-            syncInBackground: true,
-
-            // 你还可以给sync方法传递额外的参数
-            syncParams: {
-                extraFetchOptions: {
-                    // 各种参数
+        }).catch(ret => {
+            this.setState({
+                User: {
+                    user :{
+                        id : ''
+                    }
                 },
-                someFlag: true,
-            },
-        }).then(ret => {
-            // 如果找到数据，则在then方法中返回
-            // 注意：这是异步返回的结果（不了解异步请自行搜索学习）
-            // 你只能在then这个方法内继续处理ret数据
-            // 而不能在then以外处理
-            // 也没有办法“变成”同步返回
-            // 你也可以使用“看似”同步的async/await语法
-            this.setState({
-                UserToken: ret
-            })
-        }).catch(err => {
-            //如果没有找到数据且没有sync方法，
-            //或者有其他异常，则在catch中返回
-            this.setState({
-                UserToken: ''
             })
         })
     }
@@ -350,9 +312,9 @@ class Home extends Component {
         totalPage = 0;//总的页数
         setTimeout(() => {
             SplashScreen.hide()
-        },2000)
+        }, 2000)
         this._navListener = this.props.navigation.addListener('didFocus', () => {
-            if(this.props.navigation.getParam('type') === 'SendProduct'){
+            if (this.props.navigation.getParam('type') === 'SendProduct') {
                 this.setState({AllProduct: [], searchName: ''});
                 page = 1;//当前第几页
                 totalPage = 0;//总的页数
@@ -374,6 +336,7 @@ class Home extends Component {
 
     render() {
         const Onedata = this.state.Onedata || []
+        const User = this.state.User
         return (
             <View style={{flex: 1}}>
                 <Loading/>
@@ -433,9 +396,9 @@ class Home extends Component {
                         data={Onedata}
                         hasLine={false}
                         onPress={(_el) => this.props.navigation.push('OneClassDetail', {
+                            type : 'oneClass',
                             OneClassId: _el.id,
-                            User: this.state.User,
-                            UserToken: this.state.UserToken,
+                            User: User,
                         })}
                     />
                     <Text style={{paddingLeft: 10}}>
@@ -462,7 +425,7 @@ class Home extends Component {
                         <View style={style.SchoolHotBg}>
                             <TouchableOpacity style={{flexDirection: 'column'}} activeOpacity={0.6}
                                               onPress={() => this.props.navigation.push('WantBuy', {
-                                                  UserToken: this.state.UserToken,
+                                                  UserToken: User.token,
                                               })}>
                                 <Text style={style.SchoolHotTitle}>查看求购</Text>
                                 <Text style={style.SchoolHotDescribe}>卖你想卖</Text>
@@ -593,66 +556,4 @@ const style = StyleSheet.create({
     },
 })
 
-
-const HomeNavigator = createStackNavigator({
-        Home: {
-            screen: Home,
-            navigationOptions: {
-                title: null,
-                headerTransparent: true, // 背景透明
-            },
-        },
-        ProductDetail: {
-            screen: ProductDetail,
-            navigationOptions: {
-                headerTransparent: true, // 背景透明
-                cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
-                title: null,
-                headerTintColor: '#36B7AB',
-            },
-        },
-        OneClassDetail: {
-            screen: OneClassDetail,
-            navigationOptions: {
-                cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
-            },
-        },
-        WantBuy: {
-            screen: WantBuy,
-            navigationOptions: {
-                cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
-            },
-        },
-        SendProduct: {
-            screen: SendProduct,
-            navigationOptions: {
-                title: '发布商品',
-            },
-        },
-        MyUser : {
-            screen : MyUser,
-            navigationOptions: {
-                headerTransparent: true, // 背景透明
-                title: null,
-                headerTintColor: '#36B7AB',
-                headerStyle: {
-                    elevation: 0,  //去除安卓手机header的样式
-                },
-            },
-        }
-    },
-    {
-        initialRouteName: 'Home',
-        headerLayoutPreset: 'center',   //将标题居中
-    },
-)
-
-
-export default createAppContainer(HomeNavigator)
-
-
-/*export default connect(
-    state => ({OneClassFication : state.One}),
-    {OneClassiFication}
-)(Home)*/
 
