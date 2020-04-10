@@ -23,7 +23,6 @@ import ForGetPwd from './src/page/user/forget-pwd'
 import SendWantBuy from './src/page/user/send-want-buy'
 import LikeUser from './src/page/user/like-user'
 
-
 const TabNavigator = createBottomTabNavigator(
     {
         Main : {

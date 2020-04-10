@@ -13,12 +13,12 @@ import {
 } from 'react-native'
 import {reqIdDetail, reqDeleteProduct} from '../../api/index'
 import {ImageViewer} from 'react-native-image-zoom-viewer'
-import {Carousel, Icon, Toast, Grid} from '@ant-design/react-native'
+import {Carousel, Icon, Toast} from '@ant-design/react-native'
 import {EasyLoading, Loading} from '../../utils/Loading'
-import ActionButton from 'react-native-action-button'
 import CameraRoll from "@react-native-community/cameraroll";
 import Replay from './replay'
 import axios from "axios";
+import ActionButton from './ActionButton'
 
 const RNFS = require('react-native-fs'); //文件处理
 let that;
@@ -169,27 +169,9 @@ export default class ProductDetail extends Component {
             .catch(err => console.warn(err));
     }
 
-    detailProduct = async () => {
-        const id = this.state.detail.id
-        const result = await reqDeleteProduct(id)
-        if (result.code === 0) {
-            Toast.success('删除成功', 1)
-        } else {
-            Toast.fail(result.msg, 1)
-        }
-        this.props.navigation.goBack()
-        this.props.navigation.state.params.refresh();
-    }
 
-    settingProduct = () => {
-        this.props.navigation.push('SendProduct', {
-            type: 'setting',
-            detail: this.state.detail,
-            refresh: () => {
-                this.getDetail();
-            },
-        })
-    }
+
+
 
     sendComment = () => {
         if (this.state.comment) {
@@ -239,7 +221,7 @@ export default class ProductDetail extends Component {
         }
     }
 
-    callBack = (keyboard,replay,comment,commentItem) => {
+    ReplayComment = (keyboard,replay,comment,commentItem) => {
         this.setState({
             keyboard,
             replay,
@@ -248,9 +230,16 @@ export default class ProductDetail extends Component {
         })
     }
 
-    onBackAndroid = () => {
-        this.props.navigation.state.params.refresh();
+    HideButton = (keyboard, comment, replay) => {
+        this.setState({
+            keyboard,
+            comment,
+            replay
+        })
     }
+
+
+
 
     componentDidMount() {
         this.user = this.props.navigation.getParam('User')
@@ -259,7 +248,6 @@ export default class ProductDetail extends Component {
     }
 
     componentWillMount() {
-        BackHandler.addEventListener('hardwareBackPress', this.onBackAndroid)
         this._navListener = this.props.navigation.addListener('didFocus', () => {
             StatusBar.setTranslucent(true)
             StatusBar.setBackgroundColor('rgba(0, 0, 0, 0)')
@@ -272,10 +260,8 @@ export default class ProductDetail extends Component {
     }
 
     render() {
-        const {images, messageList} = this.state
-        const detail = this.state.detail || ''
-        const user = detail.user || ''
-        const userid = this.props.navigation.getParam('User').user.id
+        const {images, messageList,detail} = this.state
+        const user = detail.user || {}
         return (
             <View style={{flex: 1}}>
                 <Loading/>
@@ -362,7 +348,7 @@ export default class ProductDetail extends Component {
                                 </View>
                                 <View style={{flexDirection: 'row', padding: 10}}>
                                     <Icon name='wechat' style={{color: '#36B7AB'}}/>
-                                    <Text style={{paddingLeft: 10}}>{detail.weixin}</Text>
+                                    <Text style={{paddingLeft: 10}}>{user.weixin}</Text>
                                 </View>
                                 <View style={{flexDirection: 'row', padding: 10}}>
                                     <Icon name='phone' style={{color: '#36B7AB'}}/>
@@ -386,46 +372,20 @@ export default class ProductDetail extends Component {
                                ref={(ref) => this.Replay = ref}
                                messageList={messageList}
                                User={this.user}
-                               callBack={this.callBack}
+                               ReplayComment={this.ReplayComment}
                                navigation={this.props}
                            />
                         </View>
                     </View>
                 </ScrollView>
-                {
-                    this.state.keyboard === false ?
-                        user.id === userid ?
-                            <ActionButton buttonColor="rgba(231,76,60,1)" position='right' verticalOrientation='up'>
-                                <ActionButton.Item buttonColor='#9b59b6' onPress={() => {
-                                    this.setState({
-                                        keyboard: true,
-                                        comment: true,
-                                        replay: false
-                                    })
-                                }}>
-                                    <Text style={{color: '#FFFFFF'}}>留言</Text>
-                                </ActionButton.Item>
-                                <ActionButton.Item buttonColor='#3498db' onPress={() => this.settingProduct()}>
-                                    <Text style={{color: '#FFFFFF'}}>管理</Text>
-                                </ActionButton.Item>
-                                <ActionButton.Item buttonColor='#1abc9c' onPress={() => this.detailProduct()}>
-                                    <Text style={{color: '#FFFFFF'}}>删除</Text>
-                                </ActionButton.Item>
-                            </ActionButton> :
-                            <ActionButton
-                                buttonColor="#36B7AB"
-                                onPress={() => {
-                                    this.setState({
-                                        keyboard: true,
-                                        comment: true,
-                                        replay: false
-                                    })
-                                }}
-                                renderIcon={() => (<View><Icon name="form" style={{padding: 2, color: '#FFFFFF'}}/>
-                                    <Text style={{color: '#FFFFFF'}}>留言</Text>
-                                </View>)}
-                            /> : <View/>
-                }
+
+                <ActionButton
+                    MyUserid = {this.user}
+                    productDetai = {detail}
+                    HideButton={this.HideButton}
+                    getDetail={this.getDetail}
+                    navigation={this.props}
+                />
 
                 {this.state.keyboard === true ?
                     <View style={{backgroundColor: '#FFFFFF', flexDirection: 'row'}}>

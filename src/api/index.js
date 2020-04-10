@@ -31,18 +31,19 @@ export const reqAddProduct = (product) => ajax(BASE + '/goods/add',product,'POST
 //根据特定条件查找商品
 export const reqConditionFindProduct = (condition) => ajax(BASE + '/goods/findByPage',condition)
 //获取求购列表
-export const reqGetWantBuy = (token,page,rows,buyName) => ajax(BASE + '/token/buy/findByPage',{token,page,rows,buyName})
+export const reqGetWantBuy = (condition) => ajax(BASE + '/token/buy/findByPage',condition)
 //根据商品ID删除商品
 export const reqDeleteProduct = (id) => ajax(BASE + '/goods/deleteGoods',{id})
-//根据照片名称删除图片
-export const reqDeleteImage = (name) => ajax(BASE + '/goods/deleteFile',{name},'POST')
 //更新一个商品
 export const reqUpdateProduct = (product) => ajax(BASE + '/goods/update',product,'PUT')
 //通过userid查询用户信息
 export const findByUserId = (id) => ajax(BASE + '/user/findById',{id})
 //关注用户
-export const reqLikeUser = (userId,fansId) => ajax(BASE + '/token/fans/save',{userId,fansId},'POST')
+export const reqLikeUser = (userId,fansId,token) => ajax(BASE + '/token/fans/save',{userId,fansId,token},'POST')
 //判断是否关注该用户
 export const reqJudgeLikeUser = (userId,toUserId) => ajax(BASE + '/token/fans/checkFans',{userId,toUserId})
 //获取自己关注用户列表
 export const reqLikeUserList = (condition) => ajax(BASE + '/token/fans/findFansToUser',condition)
+//删除图片
+export const reqDeleteImage = (url) => ajax(BASE + '',{url},'POST')
+
