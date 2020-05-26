@@ -2,13 +2,23 @@
 用来根据老的state和指定的action生成并返回新的state的函数
  */
 import {combineReducers} from 'redux'
-import {RECEIVE_CLASSIFICATION} from './action-types'
+import {RECEIVE_USERDATA,RECEIVE_GETMESSAGE} from './action-types'
 
 
-function OneClassiFication(state = [] ,action) {
+
+function receiveUserData(state = [], action) {
     switch (action.type) {
-        case RECEIVE_CLASSIFICATION :
-            return action.One
+        case RECEIVE_USERDATA :
+            return {...state,User:action.User}
+        default :
+            return state
+    }
+}
+
+function receiveGetMessage(state = [], action) {
+    switch (action.type) {
+        case RECEIVE_GETMESSAGE :
+            return {...state,message:action.message}
         default :
             return state
     }
@@ -16,5 +26,6 @@ function OneClassiFication(state = [] ,action) {
 
 
 export default combineReducers({
-    OneClassiFication
+    receiveUserData,
+    receiveGetMessage
 })

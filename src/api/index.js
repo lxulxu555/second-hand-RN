@@ -39,11 +39,29 @@ export const reqUpdateProduct = (product) => ajax(BASE + '/goods/update',product
 //通过userid查询用户信息
 export const findByUserId = (id) => ajax(BASE + '/user/findById',{id})
 //关注用户
-export const reqLikeUser = (userId,fansId,token) => ajax(BASE + '/token/fans/save',{userId,fansId,token},'POST')
+export const reqLikeUser = (userId,fansId,token) => ajax(BASE + '/token/fans/save',{userId,fansId},'POSTHEADER',{token})
 //判断是否关注该用户
-export const reqJudgeLikeUser = (userId,toUserId) => ajax(BASE + '/token/fans/checkFans',{userId,toUserId})
+export const reqJudgeLikeUser = (userId,toUserId,token) => ajax(BASE + '/token/fans/checkFans',{userId,toUserId,token})
 //获取自己关注用户列表
 export const reqLikeUserList = (condition) => ajax(BASE + '/token/fans/findFansToUser',condition)
 //删除图片
 export const reqDeleteImage = (url) => ajax(BASE + '',{url},'POST')
+//点赞评论
+export const reqLikeComment = (type, state,token) => ajax(BASE + '/token/like/save',{type,state},'POSTHEADER',{token})
+//收藏商品
+export const reqLikeProduct = (userId,goodsId,token) => ajax(BASE + '/token/collect/save',{userId,goodsId},'POSTHEADER',{token})
+//发表评论
+export const reqSendComment = (content, userid, goodsid,token) => ajax(BASE + '/token/comment/save',{content,userid,goodsid},'POSTHEADER',{token})
+//发表回复
+export const reqSendReplay = (replay,token) => ajax(BASE + '/token/reply/save',replay,'POSTHEADER',{token})
+//上传求购
+export const reqSaveWantBuy = (wantBuy,token) => ajax(BASE + '/token/buy/add',wantBuy,'POSTHEADER',{token})
+//更新求购信息
+export const reqUpdateWantBuy = (condition,token) => ajax(BASE + '/token/buy/update',condition,'PUTHEADER',{token})
+//删除求购信息
+export const reqDeleteWantBuy = (id,token) => ajax(BASE + '/token/buy/delete',{id,token},'DELETE')
+//获取与我相关
+export const reqAboutMyUser = (token,nameId) => ajax(BASE + '/token/reply/findAllByUser',{token,nameId})
+//查询有几条未读信息
+export const reqGetMessage = (id) => ajax(BASE + '/user/getMessage',{id})
 

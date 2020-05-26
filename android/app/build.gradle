@@ -138,7 +138,10 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        // Add these lines below the existing config
+        manifestPlaceholders = [
+                JPUSH_APPKEY: "b130907db25544bfc25a3c2a",         //在此替换你的APPKey
+                JPUSH_CHANNEL: "developer-default"        //在此替换你的channel，也可使用默认的
+        ]
     }
     splits {
         abi {
@@ -194,6 +197,8 @@ android {
 }
 
 dependencies {
+    implementation project(':jpush-react-native')  // 添加 jpush 依赖
+    implementation project(':jcore-react-native')  // 添加 jcore 依赖
     implementation project(':@react-native-community_viewpager')
     implementation project(':@react-native-community_async-storage')
     implementation project(':@react-native-community_cameraroll')
@@ -201,7 +206,6 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     compile 'com.android.support:appcompat-v7:26.0.0'
     implementation "com.facebook.react:react-native:+"  // From node_modules
-
     if (enableHermes) {
         def hermesPath = "../../node_modules/hermes-engine/android/";
         debugImplementation files(hermesPath + "hermes-debug.aar")

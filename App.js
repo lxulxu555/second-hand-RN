@@ -1,13 +1,13 @@
-import React,{Component} from 'react'
+import React, {Component} from 'react'
 import Home from './src/page/home/home'
 import User from './src/page/user/user'
-import {Icon,Provider} from '@ant-design/react-native'
+import {Icon, Provider} from '@ant-design/react-native'
 import ClassiFication from './src/page/classification'
 
 import {createAppContainer} from 'react-navigation'
-import {createStackNavigator,CardStyleInterpolators} from 'react-navigation-stack'
-import { createBottomTabNavigator } from 'react-navigation-tabs';
-import {PermissionsAndroid} from "react-native";
+import {createStackNavigator, CardStyleInterpolators} from 'react-navigation-stack'
+import {createBottomTabNavigator} from 'react-navigation-tabs';
+import {PermissionsAndroid, View, Text,DeviceEventEmitter,Image} from "react-native";
 import ProductDetail from './src/page/product/product-detail'
 import WantBuy from './src/page/home/want-buy'
 import OneClassDetail from './src/page/home/one-class-detail'
@@ -22,50 +22,80 @@ import Nickname from './src/page/user/nick-name'
 import ForGetPwd from './src/page/user/forget-pwd'
 import SendWantBuy from './src/page/user/send-want-buy'
 import LikeUser from './src/page/user/like-user'
+import AboutMyUser from './src/page/user/about-myuser'
+
+let that
+let msg = 3
 
 const TabNavigator = createBottomTabNavigator(
     {
-        Main : {
-            screen :  Home,
-            navigationOptions : ({ navigation }) => {
+        Main: {
+            screen: Home,
+            navigationOptions: ({navigation}) => {
                 return {
-                    tabBarLabel:'首页',
-                    tabBarIcon: ({ focused }) => {
+                    tabBarLabel: '首页',
+                    tabBarIcon: ({focused}) => {
                         return (
-                            focused ? <Icon name='home' style={{color:'red'}}/> : <Icon name='home'/>
+                            focused ? <Icon name='home' style={{color: 'red'}}/> : <Icon name='home'/>
                         )
                     }
                 }
             }
         },
-        ClassiFication:{
+        ClassiFication: {
             screen: ClassiFication,
             navigationOptions: {
                 // 底部导航
-                tabBarLabel:'分类',
-                tabBarIcon: ({ focused }) => {
+                tabBarLabel: '分类',
+                tabBarIcon: ({focused}) => {
                     return (
-                        focused ? <Icon name='appstore' style={{color:'red'}}/> : <Icon name='appstore'/>
+                        focused ? <Icon name='appstore' style={{color: 'red'}}/> : <Icon name='appstore'/>
                     )
                 }
             }
         },
-        User:{
+        User: {
             screen: User,
-            navigationOptions: {
-                // 底部导航
-                tabBarLabel:'个人中心',
-                tabBarIcon: ({ focused }) => {
-                    return (
-                        focused ? <Icon name='user' style={{color:'red'}}/> : <Icon name='user'/>
-                    )
+            navigationOptions: ({navigation}) => {
+                return {
+                    // 底部导航
+                    tabBarLabel: '个人中心',
+                    tabBarIcon: ({focused}) => {
+                        let msg = that.state.msg
+                        let icon = !!focused
+                        return <View>
+                            {
+                                msg > 0 ?
+                                    <View style={{
+                                        width: 13,
+                                        height: 13,
+                                        justifyContent: "center",
+                                        position: 'absolute',
+                                        zIndex: 9,
+                                        backgroundColor: "#FB3768",
+                                        borderRadius: 6,
+                                        right: 0,
+                                        top: -2,
+                                    }}>
+                                        <Text style={[{fontSize: 10, color: "#fff", textAlign: "center",}]}>{msg}</Text>
+                                    </View> : null
+                            }
+                            {
+                                icon === true ?
+                                    <Image source={{uri : that.state.url}} style={{width: 34, height: 30,borderRadius: 15}}/> :
+                                    <Icon name='user' style={{color: icon}}/>
+                            }
+                        </View>
+                    }
                 }
             }
-    }},
+
+        }
+    },
     {
-        navigationOptions: ({ navigation }) => {
+        navigationOptions: ({navigation}) => {
             const optisns = {};
-            const { routeName } = navigation.state.routes[navigation.state.index];
+            const {routeName} = navigation.state.routes[navigation.state.index];
             if (routeName === "Main") {
                 optisns.header = null;
                 return optisns;
@@ -108,36 +138,35 @@ const TabNavigator = createBottomTabNavigator(
             }
         },
     }
-    )
-
+)
 
 
 const AppStackNavigation = createStackNavigator({
     Homes: {
-        screen : TabNavigator,
+        screen: TabNavigator,
     },
-    ProductDetail : {
-        screen : ProductDetail,
+    ProductDetail: {
+        screen: ProductDetail,
         navigationOptions: {
             headerTransparent: true, // 背景透明
             cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
             headerTintColor: '#36B7AB',
         },
     },
-    WantBuy : {
-        screen : WantBuy
+    WantBuy: {
+        screen: WantBuy
     },
-    OneClassDetail : {
-        screen : OneClassDetail
+    OneClassDetail: {
+        screen: OneClassDetail
     },
-    Setting : {
-        screen : Setting
+    Setting: {
+        screen: Setting
     },
-    Login : {
-        screen : Login
+    Login: {
+        screen: Login
     },
-    SendProduct : {
-        screen : SendProduct
+    SendProduct: {
+        screen: SendProduct
     },
     MyUser: {
         screen: MyUser,
@@ -146,40 +175,46 @@ const AppStackNavigation = createStackNavigator({
             headerTintColor: '#36B7AB',
         }
     },
-    Register : {
-        screen : Register,
+    Register: {
+        screen: Register,
     },
-    Mycollect : {
-        screen : Mycollect,
+    Mycollect: {
+        screen: Mycollect,
         navigationOptions: {
             cardStyleInterpolator: CardStyleInterpolators.forScaleFromCenterAndroid,
             title: '我收藏的',
         },
     },
-    UpdateUser : {
-        screen : UpdateUser,
+    UpdateUser: {
+        screen: UpdateUser,
         navigationOptions: {
             title: '我的资料',
         }
     },
-    Nickname : {
-        screen : Nickname,
+    Nickname: {
+        screen: Nickname,
     },
     ForGetPwd: {
-        screen : ForGetPwd,
+        screen: ForGetPwd,
     },
-    SendWantBuy : {
-        screen : SendWantBuy,
+    SendWantBuy: {
+        screen: SendWantBuy,
         navigationOptions: {
             title: '发布求购',
         },
     },
-    LikeUser : {
-        screen : LikeUser,
+    LikeUser: {
+        screen: LikeUser,
+    },
+    AboutMyUser: {
+        screen: AboutMyUser,
+        navigationOptions: {
+            title: '消息',
+        },
     }
-},{
-    defaultNavigationOptions : {
-        title : null,
+}, {
+    defaultNavigationOptions: {
+        title: null,
         headerStyle: {
             elevation: 0,  //去除安卓手机header的样式
         },
@@ -190,7 +225,16 @@ const AppStackNavigation = createStackNavigator({
 const AppContainer = createAppContainer(AppStackNavigation)
 
 
-export default class App extends Component{
+export default class App extends Component {
+    constructor(props){
+        super(props)
+        that = this
+        this.state = {
+            url : '',
+            msg : ''
+        }
+    }
+
 
     //获取保存图片到相册权限
     requestExternalStoragePermission = async () => {
@@ -227,23 +271,32 @@ export default class App extends Component{
         }
     }
 
+    componentDidMount(){
+        DeviceEventEmitter.addListener('changeMine', (url) => {
+            //收到监听后想做的事情
+            that.setState({url})
+        })
+        DeviceEventEmitter.addListener('msg', (msg) => {
+            //收到监听后想做的事情
+            that.setState({msg})
+        })
+    }
 
-
-
-    componentWillMount(){
+    componentWillMount() {
         this.requestExternalStoragePermission()
         this.requestCarmeraPermission()
     }
 
     render() {
+
+
+
         return (
             <Provider>
-            <AppContainer/>
+                <AppContainer/>
             </Provider>
         )
     }
 }
-
-
 
 

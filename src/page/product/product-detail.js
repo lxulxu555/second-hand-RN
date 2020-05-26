@@ -11,25 +11,23 @@ import {
     ScrollView,
     TextInput, BackHandler,
 } from 'react-native'
-import {reqIdDetail, reqDeleteProduct} from '../../api/index'
+import {reqIdDetail, reqLikeProduct,reqSendComment,reqSendReplay} from '../../api/index'
 import {ImageViewer} from 'react-native-image-zoom-viewer'
 import {Carousel, Icon, Toast} from '@ant-design/react-native'
 import {EasyLoading, Loading} from '../../utils/Loading'
 import CameraRoll from "@react-native-community/cameraroll";
 import Replay from './replay'
-import axios from "axios";
 import ActionButton from './ActionButton'
+import {connect} from 'react-redux'
 
 const RNFS = require('react-native-fs'); //文件处理
-let that;
 
 
-export default class ProductDetail extends Component {
+class ProductDetail extends Component {
 
 
     constructor(props) {
         super(props);
-        that = this;
         this.state = ({
             detail: {},
             images: [],
@@ -53,7 +51,8 @@ export default class ProductDetail extends Component {
 
     getDetail = async () => {
         EasyLoading.show('网速有点慢')
-        const userid = this.user.user === {} ? '' : this.user.user.id
+       // const userid = this.user.user === {} ? '' : this.user.user.id
+        const userid = this.user.user.id
         const goodsid = this.goodsid
         const result = await reqIdDetail(goodsid, userid)
         const commentList = result.commentList
@@ -136,62 +135,52 @@ export default class ProductDetail extends Component {
         const Token = this.user.token
         const goodsId = this.state.detail.id
         const userId = this.user.user.id
-        axios.post('http://47.93.240.205:8800/api/token/collect/save', {userId, goodsId}, {
-            params: {
-                token: Token
-            }
-        })
-            .then(response => {
-                if (!userId) {
-                    Toast.fail('请先登录', 1)
+        const result = await reqLikeProduct(userId,goodsId,Token)
+        if(result.code === 0){
+            if (!userId) {
+                Toast.fail('请先登录', 1)
+            } else {
+                if (code === false) {
+                    this.heart.setNativeProps({
+                        style: {
+                            tintColor: 'red'
+                        }
+                    })
+                    this.setState({
+                        detail: {...this.state.detail, code: true}
+                    })
                 } else {
-                    if (code === false) {
-                        this.heart.setNativeProps({
-                            style: {
-                                tintColor: 'red'
-                            }
-                        })
-                        this.setState({
-                            detail: {...this.state.detail, code: true}
-                        })
-                    } else {
-                        this.heart.setNativeProps({
-                            style: {
-                                tintColor: 'black'
-                            }
-                        })
-                        this.setState({
-                            detail: {...this.state.detail, code: false}
-                        })
-                    }
+                    this.heart.setNativeProps({
+                        style: {
+                            tintColor: 'black'
+                        }
+                    })
+                    this.setState({
+                        detail: {...this.state.detail, code: false}
+                    })
                 }
-            })
-            .catch(err => console.warn(err));
+            }
+        } else {
+            Toast.fail(result.msg,'1')
+        }
     }
 
 
 
 
 
-    sendComment = () => {
+    sendComment = async () => {
         if (this.state.comment) {
             const content = this.state.text
             const goodsid = this.goodsid
             const userid = this.user.user.id
-            axios.post('http://47.93.240.205:8800/api/token/comment/save', {content, userid, goodsid}, {
-                params: {
-                    token: this.user.token
-                }
-            })
-                .then(response => {
-                    if (response.data.code === 0) {
-                        this.getDetail()
-                        this.setState({
-                            keyboard: false,
-                        })
-                    }
+            const result = await reqSendComment(content, userid, goodsid, this.user.token)
+            if (result.code === 0) {
+                this.getDetail()
+                this.setState({
+                    keyboard: false,
                 })
-                .catch(err => console.warn(err));
+            }
         } else if (this.state.replay) {
             const replay = {}
             const item = this.state.commentItem
@@ -202,22 +191,15 @@ export default class ProductDetail extends Component {
             replay.leaf = item.leaf === null ? '0' : item.id
             replay.parentname = item.user.nickname
             replay.content = this.state.text
-            axios.post('http://47.93.240.205:8800/api/token/reply/save', replay, {
-                params: {
-                    token: this.user.token
-                }
-            })
-                .then(response => {
-                    if (response.data.code === 0) {
-                        this.getDetail()
-                        this.setState({
-                            keyboard: false,
-                        })
-                    } else {
-                        Toast.fail('回复失败', 1)
-                    }
+            const result = await reqSendReplay(replay,this.user.token)
+            if (result.code === 0) {
+                this.getDetail()
+                this.setState({
+                    keyboard: false,
                 })
-                .catch(err => console.warn(err));
+            } else {
+                Toast.fail('回复失败', 1)
+            }
         }
     }
 
@@ -242,9 +224,10 @@ export default class ProductDetail extends Component {
 
 
     componentDidMount() {
-        this.user = this.props.navigation.getParam('User')
+        this.user = this.props.User
         this.goodsid = this.props.navigation.getParam('ProductId')
         this.getDetail()
+
     }
 
     componentWillMount() {
@@ -385,6 +368,7 @@ export default class ProductDetail extends Component {
                     HideButton={this.HideButton}
                     getDetail={this.getDetail}
                     navigation={this.props}
+                    keyboard = {this.state.keyboard}
                 />
 
                 {this.state.keyboard === true ?
@@ -436,3 +420,10 @@ export default class ProductDetail extends Component {
         )
     }
 }
+const mapStateToProps = state => ({
+    User: state.receiveUserData.User
+})
+
+export default connect(
+    mapStateToProps
+)(ProductDetail)

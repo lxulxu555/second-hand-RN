@@ -3,16 +3,27 @@
 同步action: 对象 {type: 'xxx', data: 数据值}
 异步action: 函数  dispatch => {}
  */
-import {reqClassiFication} from '../api'
-import {RECEIVE_CLASSIFICATION} from './action-types'
+import {RECEIVE_USERDATA, RECEIVE_GETMESSAGE} from './action-types'
+import {reqGetMessage} from '../api'
+import {DeviceEventEmitter} from "react-native";
 
-//接收一级分类的同步action
-export const receiveClassFication = (One) => ({type:RECEIVE_CLASSIFICATION,One})
+//获取用户信息的同步action
+const receiveUserData = (User) => ({type: RECEIVE_USERDATA, User})
+const receiveGetMessage = (message) => ({type: RECEIVE_GETMESSAGE, message})
 
-//获取首页一级分类的异步action
-export const OneClassiFication = () => {
+const reqgetMessage = (id) => {
     return async dispatch => {
-        const result = await reqClassiFication('')
-        dispatch(receiveClassFication(result))
+        // 1. 执行异步ajax请求
+        const result = await reqGetMessage(id)
+        // 分发接收用户的同步action
+        if(result.code !== -1){
+            DeviceEventEmitter.emit('msg', result);
+            dispatch(receiveGetMessage(result))
+        }
     }
+}
+
+export {
+    receiveUserData,
+    reqgetMessage
 }

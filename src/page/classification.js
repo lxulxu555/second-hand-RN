@@ -7,18 +7,16 @@ import {
     TouchableHighlight,
     Image, StatusBar,
 } from 'react-native'
-import {Toast} from '@ant-design/react-native'
 import {reqFindChildClass, reqClassiFication} from '../api'
 import {EasyLoading, Loading} from "../utils/Loading";
-import {readUser} from "../utils/ReadUserData";
+import {connect} from 'react-redux'
 
-export default class ClassiFication extends Component {
+class ClassiFication extends Component {
 
     state = {
         Leftclass: [],
         RightClass: [],
         LeftClassId: 1,
-        User : {}
     }
 
     getLeftClass = async () => {
@@ -106,22 +104,17 @@ export default class ClassiFication extends Component {
         )
     }
 
-    _readData = async () => {
-        const data = await readUser._readData('home')
-        this.setState({User:data})
-    }
 
     SendClassDetail = (id) => {
         this.props.navigation.push('OneClassDetail',{
             type : 'twoClass',
             TwoClassId : id,
-            User : this.state.User,
+            User : this.props.User,
         })
     }
 
     componentWillMount() {
         this._navListener = this.props.navigation.addListener("didFocus", () => {
-            this._readData()
             StatusBar.setBarStyle("dark-content"); //状态栏文字颜色
             StatusBar.setBackgroundColor("#ffffff"); //状态栏背景色
         });
@@ -159,3 +152,10 @@ export default class ClassiFication extends Component {
     }
 }
 
+const mapStateToProps = state => ({
+    User: state.receiveUserData
+})
+
+export default connect(
+    mapStateToProps
+)(ClassiFication)

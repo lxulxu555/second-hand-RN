@@ -47,6 +47,10 @@ target 'EuraisaSecond' do
 
   pod 'react-native-viewpager', :path => '../node_modules/@react-native-community/viewpager'
 
+  pod 'JCore', :path => '../node_modules/jcore-react-native'
+
+  pod 'JPush', :path => '../node_modules/jpush-react-native'
+
   target 'EuraisaSecondTests' do
     inherit! :search_paths
     # Pods for testing

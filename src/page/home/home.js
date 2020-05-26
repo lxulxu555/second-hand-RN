@@ -9,7 +9,7 @@ import {
     BackHandler,
     ToastAndroid,
     StatusBar,
-    TouchableOpacity
+    TouchableOpacity, DeviceEventEmitter
 } from 'react-native'
 import {SearchBar, Carousel, Grid, Icon} from '@ant-design/react-native'
 import {EasyLoading, Loading} from "../../utils/Loading";
@@ -17,13 +17,15 @@ import {EasyLoading, Loading} from "../../utils/Loading";
 import ActionButton from 'react-native-action-button'
 import {reqGetAllProduct, reqClassiFication, reqConditionFindProduct} from '../../api/index'
 import SplashScreen from 'react-native-splash-screen'
-import {ChangePage, Foot,BackTop,ProductList} from '../../utils/ChangePage'
+import {ChangePage, Foot, BackTop, ProductList} from '../../utils/ChangePage'
 import {readUser} from '../../utils/ReadUserData'
+import {receiveUserData, reqgetMessage} from '../../redux/actions'
+import {connect} from 'react-redux'
 
 let page = 1;//当前第几页
 let totalPage = 0;//总的页数
 
-export default class Home extends Component {
+class Home extends Component {
 
 
     state = {
@@ -31,7 +33,6 @@ export default class Home extends Component {
         Onedata: [],
         isTop: false,
         searchName: '',
-        User: {},
         AllProduct: [],
         isRefreshing: false,
         showFoot: 0, // 控制foot， 0：隐藏footer  1：已加载完成,没有更多数据   2 ：显示加载中
@@ -96,7 +97,7 @@ export default class Home extends Component {
 
     _contentViewScroll = (e) => {
         const data = ChangePage.contentViewScroll(e)
-        if(data === true){
+        if (data === true) {
             //如果是正在加载中或没有更多数据了，则返回
             if (this.state.showFoot !== 0) {
                 return;
@@ -105,10 +106,10 @@ export default class Home extends Component {
             if ((page !== 1) && (page >= totalPage)) {
                 return;
             } else {
-                page ++
+                page++
             }
             //底部显示正在加载更多数据
-            this.setState({showFoot:2})
+            this.setState({showFoot: 2})
             this.getAllProduct(page)
         }
     }
@@ -147,8 +148,9 @@ export default class Home extends Component {
     }
 
     _readData = async () => {
-        const data = await readUser._readData('home')
-        this.setState({User:data})
+        const data = await readUser._readData()
+        this.props.dispatch(receiveUserData(data))
+        this.props.dispatch(reqgetMessage(this.props.User.user.id))
     }
 
 
@@ -173,7 +175,6 @@ export default class Home extends Component {
     }
 
 
-
     componentWillUnmount() {
         BackHandler.removeEventListener('hardwareBackPress', this.onBackAndroid);
         this._navListener.remove();
@@ -181,7 +182,6 @@ export default class Home extends Component {
 
     render() {
         const Onedata = this.state.Onedata || []
-        const User = this.state.User
         return (
             <View style={{flex: 1}}>
                 <Loading/>
@@ -242,7 +242,6 @@ export default class Home extends Component {
                         onPress={(_el) => this.props.navigation.push('OneClassDetail', {
                             type: 'oneClass',
                             OneClassId: _el.id,
-                            User: User,
                         })}
                     />
                     <Text style={{paddingLeft: 10}}>
@@ -268,9 +267,7 @@ export default class Home extends Component {
                         </View>
                         <View style={style.SchoolHotBg}>
                             <TouchableOpacity style={{flexDirection: 'column'}} activeOpacity={0.6}
-                                              onPress={() => this.props.navigation.push('WantBuy', {
-                                                  UserToken: User.token,
-                                              })}>
+                                              onPress={() => this.props.navigation.push('WantBuy')}>
                                 <Text style={style.SchoolHotTitle}>查看求购</Text>
                                 <Text style={style.SchoolHotDescribe}>卖你想卖</Text>
                                 <View style={{flex: 1}}/>
@@ -326,26 +323,26 @@ export default class Home extends Component {
 
                     <ProductList
                         AllProduct={this.state.AllProduct}
-                        User={this.state.User}
                         props={this.props}
                     />
 
                     <Foot showfooter={this.state.showFoot}/>
 
+
+
                 </ScrollView>
 
-                    {
-                        this.state.isTop === true ? <ActionButton
-                            renderIcon={() => (<Icon name='arrow-up' style={{color: '#1DA57A'}}/>)}
-                            buttonColor="#FFFFFF"
-                            position='right'
-                            verticalOrientation='up'
-                            size={34}
-                            border='#1DA57A'
-                            onPress={() => this.scrollview.scrollTo({x: 0, y: 0, animated: true})}
-                        /> : <View/>
-                    }
-
+                {
+                    this.state.isTop === true ? <ActionButton
+                        renderIcon={() => (<Icon name='arrow-up' style={{color: '#1DA57A'}}/>)}
+                        buttonColor="#FFFFFF"
+                        position='right'
+                        verticalOrientation='up'
+                        size={34}
+                        border='#1DA57A'
+                        onPress={() => this.scrollview.scrollTo({x: 0, y: 0, animated: true})}
+                    /> : <View/>
+                }
             </View>
         )
     }
@@ -382,3 +379,11 @@ const style = StyleSheet.create({
 })
 
 
+const mapStateToProps = state => ({
+    User: state.receiveUserData.User,
+    message: state.receiveGetMessage.message
+})
+
+export default connect(
+    mapStateToProps
+)(Home)
