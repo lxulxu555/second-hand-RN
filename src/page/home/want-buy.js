@@ -45,6 +45,7 @@ class WantBuy extends Component {
 
     getWantBuy = async (page) => {
         const token  = this.props.User.token
+        console.log(token)
         if(!token){
             Toast.fail('请先登录',1)
         }

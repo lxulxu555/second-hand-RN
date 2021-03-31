@@ -1,5 +1,5 @@
 import {ajax} from "./ajax";
-const BASE = 'http://47.93.240.205:8800/api'
+const BASE = 'http://101.201.151.118:8800/api'
 //请求一级分类
 export const reqClassiFication = () => ajax(BASE + '/classify1/findClassify1')
 //根据一级分类ID查询二级分类
@@ -49,9 +49,9 @@ export const reqDeleteImage = (url) => ajax(BASE + '',{url},'POST')
 //点赞评论
 export const reqLikeComment = (type, state,token) => ajax(BASE + '/token/like/save',{type,state},'POSTHEADER',{token})
 //收藏商品
-export const reqLikeProduct = (userId,goodsId,token) => ajax(BASE + '/token/collect/save',{userId,goodsId},'POSTHEADER',{token})
+export const reqLikeProduct = (userId,goodsId,type,token) => ajax(BASE + '/token/collect/save',{userId,goodsId,type},'POSTHEADER',{token})
 //发表评论
-export const reqSendComment = (content, userid, goodsid,token) => ajax(BASE + '/token/comment/save',{content,userid,goodsid},'POSTHEADER',{token})
+export const reqSendComment = (content, userid, goodsid,type,token) => ajax(BASE + '/token/comment/save',{content,userid,goodsid,type},'POSTHEADER',{token})
 //发表回复
 export const reqSendReplay = (replay,token) => ajax(BASE + '/token/reply/save',replay,'POSTHEADER',{token})
 //上传求购
@@ -65,3 +65,10 @@ export const reqAboutMyUser = (token,nameId) => ajax(BASE + '/token/reply/findAl
 //查询有几条未读信息
 export const reqGetMessage = (id) => ajax(BASE + '/user/getMessage',{id})
 
+
+export const reqConditionFindJob = (condition) => ajax(BASE + '/part-time',condition)
+
+export const reqUpdateJob = (product) => ajax(BASE + '/part-time',product,'PUT')
+export const reqAddJob = (product) => ajax(BASE + '/part-time',product,'POST')
+export const reqDeleteJob = (id) => ajax(BASE + '/part-time',{id},'DELETE')
+export const reGetJobId = (id) => ajax(BASE + '/part-time/findById',{id})

@@ -55,5 +55,8 @@
   },
   "jest": {
     "preset": "react-native"
+  },
+  "resolutions": {
+    "@react-native-community/viewpager": "^3.3.0"
   }
 }

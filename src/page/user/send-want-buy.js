@@ -81,7 +81,7 @@ class SendWantBuy extends Component {
         wantBuy.images = this.ImageWall.state.ImageUrl.toString()
         wantBuy.minPrice = this.state.minPrice
         wantBuy.maxPrice = this.state.maxPrice
-        if (wantBuy.title === '' && wantBuy.intro === '' && wantBuy.weixin === '' && wantBuy.minPrice === '' && wantBuy.maxPrice === '') {
+        if (wantBuy.userid === '' || wantBuy.title === '' || wantBuy.intro === '' || wantBuy.weixin === '' || wantBuy.minPrice === '' || wantBuy.maxPrice === '' || ! wantBuy.images) {
             Toast.fail('不能为空', 1)
         }
         const result = type === 'MyUser' ? await reqUpdateWantBuy(wantBuy,token) : await reqSaveWantBuy(wantBuy,token)

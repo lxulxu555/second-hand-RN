@@ -80,7 +80,6 @@ export default class Login extends Component {
                     <List style={{marginTop: 20, width: '90%'}}>
                         <InputItem
                             onSubmitEditing = {()=> {this.type.focus()}} //当软键盘的确定/提交按钮被按下的时候调用此函数
-                            clear
                             value={this.state.username}
                             onChange={value => {
                                 this.setState({
@@ -99,7 +98,6 @@ export default class Login extends Component {
                             type={this.state.click === true ? '' : 'password'}
                             extra={<TouchableOpacity onPress={() => this.props.navigation.push('ForGetPwd')}><Text
                                 style={{color: '#778899'}}>忘记密码</Text></TouchableOpacity>}
-                            clear
                             value={this.state.password}
                             onChange={value => {
                                 this.setState({

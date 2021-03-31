@@ -1,8 +1,9 @@
 import React, {Component} from 'react'
 import {ScrollView} from 'react-native'
 import ScrollableTabView, {ScrollableTabBar} from "react-native-scrollable-tab-view";
-import {ChangePage, Foot, ProductList, WantBuyList} from "../../utils/ChangePage";
-import {reqConditionFindProduct, reqGetWantBuy} from "../../api";
+import {ChangePage, Foot, ProductList, WantBuyList,JobList} from "../../utils/ChangePage";
+import {reqConditionFindProduct, reqGetWantBuy,reqConditionFindJob} from "../../api";
+import {EasyLoading, Loading} from '../../utils/Loading';
 
 let page = 1;//当前第几页
 let totalPage = 0;//总的页数
@@ -12,16 +13,20 @@ export default class SliderUser extends Component {
     state = {
         UserProduct: [],
         AllWantBuy: [],
+        UserHotNews: [],
+        JobList:[],
         showFoot: 0,
         waiting: false,
         User: {}
     }
 
     UserProduct = async (page) => {
+        EasyLoading.show('网速有点慢');
         const condition = {}
         condition.userid = this.state.User.user.id
         condition.page = page
         condition.rows = 10
+        condition.type = 1
         const result = await reqConditionFindProduct(condition)
         const data = ChangePage.getData(page, totalPage, result)
         totalPage = data.totalPage
@@ -30,9 +35,44 @@ export default class SliderUser extends Component {
             UserProduct: [...this.state.UserProduct, ...data.NewData],
             showFoot: data.foot,
         });
+        EasyLoading.dismiss()
+    }
+
+    UserHotNews = async () => {
+        EasyLoading.show('网速有点慢');
+        const condition = {}
+        condition.userid = this.state.User.user.id
+        condition.type = 2 
+        const result = await reqConditionFindProduct(condition)
+        let NewData = []
+        result.data.map(function (item, index) {
+            NewData.push({
+                key: index,
+                value: item,
+            })
+        })
+        this.setState({UserHotNews: NewData})
+        EasyLoading.dismiss()
+    }
+
+    UserJob = async () => {
+        EasyLoading.show('网速有点慢');
+        const condition = {}
+        condition.userid = this.state.User.user.id
+        const result = await reqConditionFindJob(condition)
+        let NewData = []
+        result.data.map(function (item, index) {
+            NewData.push({
+                key: index,
+                value: item,
+            })
+        })
+        this.setState({JobList: NewData})
+        EasyLoading.dismiss()
     }
 
     UserWantBuy = async () => {
+        EasyLoading.show('网速有点慢');
         const condition = {}
         condition.token = this.props.MyToken
         condition.userid = this.state.User.user.id
@@ -45,6 +85,7 @@ export default class SliderUser extends Component {
             })
         })
         this.setState({AllWantBuy: NewData})
+        EasyLoading.dismiss()
     }
 
     _contentViewScroll = (e) => {
@@ -85,6 +126,8 @@ export default class SliderUser extends Component {
 
     render() {
         return (
+            <>
+            <Loading />
             <ScrollableTabView
                 style={{marginTop: '4%'}}
                 initialPage={0} //初始化时被选中的Tab下标，默认是0
@@ -93,6 +136,10 @@ export default class SliderUser extends Component {
                 onChangeTab={(obj) => {//Tab切换之后会触发此方法
                     if (obj.i === 1) {
                         this.UserWantBuy()
+                    }else if(obj.i == 2){
+                        this.UserHotNews()
+                    }else if(obj.i == 3){
+                        this.UserJob()
                     }
                 }}
             >
@@ -118,8 +165,29 @@ export default class SliderUser extends Component {
                         props={this.props.props}
                     />
                 </ScrollView>
+                <ScrollView
+                    tabLabel='我的帖子'
+                    style={{flex: 1}}
+                >
+                    <ProductList
+                        AllProduct={this.state.UserHotNews}
+                        type='MyUser'
+                        props={this.props.props}
+                    />
+                </ScrollView>
+                <ScrollView
+                    tabLabel='我的兼职'
+                    style={{flex: 1}}
+                >
+                    <JobList
+                        JobList={this.state.JobList}
+                        type='MyUser'
+                        props={this.props.props}
+                    />
+                </ScrollView>
 
             </ScrollableTabView>
+            </>
         )
     }
 }

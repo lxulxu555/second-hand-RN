@@ -16,6 +16,7 @@ import {Card} from "@ant-design/react-native/lib/card";
 import SliderUser from "./slider-user";
 import {connect} from 'react-redux'
 import {readUser} from "../../utils/ReadUserData";
+import {EasyLoading, Loading} from '../../utils/Loading';
 
 let height = Dimensions.get('window').height
 
@@ -30,12 +31,14 @@ class MyUser extends Component {
 
 
     findUserById = async () => {
+        EasyLoading.show('网速有点慢');
         const type = this.props.navigation.getParam('type')
         const id = type === 'My' ? this.props.User.user.id : this.props.navigation.getParam('id')
         const result = await findByUserId(id)
         this.setState({
             UserData: result.data,
         })
+        EasyLoading.dismiss()
     }
 
     likeUser = async () => {
@@ -55,7 +58,7 @@ class MyUser extends Component {
 
     JudgeLikeUser = async () => {
         const userId = this.props.User.user.id //登录的用户的ID
-        const toUserId = this.props.navigation.getParam('id')
+        const toUserId = this.props.navigation.getParam('id') ? this.props.navigation.getParam('id') : ""
         const result = await reqJudgeLikeUser(userId, toUserId, this.props.User.token)
         this.setState({
             LikeUserType: result === true ? '已关注' : '关注'
@@ -85,6 +88,7 @@ class MyUser extends Component {
         const Fans = UserData.fans || {}
         return (
             <View style={{flex: 1}}>
+                   <Loading />
                 <View>
                     <ImageBackground
                         style={{height: height * 0.4, width: '100%', opacity: 0.2}}

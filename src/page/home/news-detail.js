@@ -43,7 +43,6 @@ class ProductDetail extends Component {
       comment: false,
       commentItem: {},
       ImageVisible: false,
-      type: '',
     };
   }
 
@@ -55,38 +54,45 @@ class ProductDetail extends Component {
 
   getDetail = async () => {
     EasyLoading.show('网速有点慢');
-    // const userid = this.user.user === {} ? '' : this.user.user.id
     const userid = this.user.user.id;
-    const goodsid = this.goodsid;
-    const result = await reqIdDetail(goodsid, userid);
-    const commentList = result.commentList;
-    const images = result.images?.split(',');
-    const NewImages = images.map(item => ({
-      url: item,
-    }));
-    this.setState({
-      detail: result,
-      images: NewImages,
-      messageList: commentList,
-      type: result.type,
-    });
-    EasyLoading.dismiss();
+    const postId = this.goodsid;
+    const result = await reqIdDetail(postId, userid);
+    const images = result?.imagesUrl?.split(',');
+    const NewImages =
+      images &&
+      images.map(item => ({
+        url: item,
+      }));
+    this.setState(
+      {
+        detail: result,
+        images: NewImages,
+      },
+      () => {
+        EasyLoading.dismiss();
+      },
+    );
   };
 
   DetailImages = () => {
-    const images = this.state.images
-    return images && images.map((item, index) => {
-      return (
-        <TouchableHighlight onPress={() => this._OpenImage(index)} key={index}>
-          <View style={{height: 400}}>
-            <Image
-              source={{uri: item.url}}
-              style={{width: '100%', height: '100%'}}
-            />
-          </View>
-        </TouchableHighlight>
-      );
-    });
+    const images = this.state?.images;
+    return (
+      images &&
+      images.map((item, index) => {
+        return (
+          <TouchableHighlight
+            onPress={() => this._OpenImage(index)}
+            key={index}>
+            <View style={{height: 400}}>
+              <Image
+                source={{uri: item.url}}
+                style={{width: '100%', height: '100%'}}
+              />
+            </View>
+          </TouchableHighlight>
+        );
+      })
+    );
   };
 
   _OpenImage = index => {
@@ -148,95 +154,6 @@ class ProductDetail extends Component {
     }
   };
 
-  Heart = async () => {
-    const code = this.state.detail.code;
-    const Token = this.user.token;
-    const goodsId = this.state.detail.id;
-    const userId = this.user.user.id;
-    const type = 1;
-    EasyLoading.show('网速有点慢');
-    const result = await reqLikeProduct(userId, goodsId, type, Token);
-    if (result.code === 0) {
-      if (!userId) {
-        Toast.fail('请先登录', 1);
-      } else {
-        if (code === false) {
-          this.heart.setNativeProps({
-            style: {
-              tintColor: 'red',
-            },
-          });
-          this.setState({
-            detail: {...this.state.detail, code: true},
-          });
-        } else {
-          this.heart.setNativeProps({
-            style: {
-              tintColor: 'black',
-            },
-          });
-          this.setState({
-            detail: {...this.state.detail, code: false},
-          });
-        }
-      }
-    } else {
-      Toast.fail(result.msg, '1');
-    }
-    EasyLoading.dismiss()
-  };
-
-  sendComment = async () => {
-    if (this.state.comment) {
-      const content = this.state.text;
-      const goodsid = this.goodsid;
-      const userid = this.user.user.id;
-      const type = 1;
-      const result = await reqSendComment(
-        content,
-        userid,
-        goodsid,
-        type,
-        this.user.token,
-      );
-      if (result.code === 0) {
-        this.getDetail();
-        this.setState({
-          keyboard: false,
-        });
-      }
-    } else if (this.state.replay) {
-      const replay = {};
-      const item = this.state.commentItem;
-      replay.userid = this.user.user.id;
-      replay.commentid = item.commentid;
-      replay.goodsid = item.goodsid;
-      replay.nameid = item.user.id;
-      replay.leaf = item.leaf === null ? '0' : item.id;
-      replay.parentname = item.user.nickname;
-      replay.content = this.state.text;
-      replay.type = 1;
-      const result = await reqSendReplay(replay, this.user.token);
-      if (result.code === 0) {
-        this.getDetail();
-        this.setState({
-          keyboard: false,
-        });
-      } else {
-        Toast.fail('回复失败', 1);
-      }
-    }
-  };
-
-  ReplayComment = (keyboard, replay, comment, commentItem) => {
-    this.setState({
-      keyboard,
-      replay,
-      comment,
-      commentItem,
-    });
-  };
-
   HideButton = (keyboard, comment, replay) => {
     this.setState({
       keyboard,
@@ -247,7 +164,7 @@ class ProductDetail extends Component {
 
   componentDidMount() {
     this.user = this.props.User;
-    this.goodsid = this.props.navigation.getParam('ProductId');
+    this.goodsid = this.props.navigation.getParam('PostId');
     this.getDetail();
   }
 
@@ -264,7 +181,7 @@ class ProductDetail extends Component {
   }
 
   render() {
-    const {images, messageList, detail, type} = this.state;
+    const {images, detail} = this.state;
     const user = detail.user || {};
     return (
       <View style={{flex: 1}}>
@@ -310,37 +227,8 @@ class ProductDetail extends Component {
           <View>
             <Carousel>{this.DetailImages()}</Carousel>
             <View style={{backgroundColor: '#FFFFFF'}}>
-              {type == '1' && (
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <Text style={{fontSize: 15, color: 'red', margin: 15}}>
-                    ￥<Text style={{fontSize: 20}}>{detail.price1}</Text>
-                  </Text>
-                  <View style={{flex: 1}} />
-                  <TouchableOpacity onPress={() => this.Heart()}>
-                    <Image
-                      ref={ref => (this.heart = ref)}
-                      source={require('../../../android/app/src/main/res/drawable-hdpi/collect.png')}
-                      style={{
-                        marginRight: 5,
-                        width: 20,
-                        height: 20,
-                        tintColor:
-                          this.state.detail.code === true ? 'red' : 'black',
-                      }}
-                    />
-                  </TouchableOpacity>
-                  <Text style={{marginRight: 15}}>
-                    {this.state.detail.code === true ? (
-                      <Text>取消收藏</Text>
-                    ) : (
-                      <Text>收藏</Text>
-                    )}
-                  </Text>
-                </View>
-              )}
-
-              <Text style={{fontWeight: 'bold', fontSize: 18, marginLeft: 15,marginTop:10}}>
-                {detail.name}
+              <Text style={{fontWeight: 'bold', fontSize: 18, marginLeft: 15}}>
+                {detail.title}
               </Text>
               <Text
                 style={{
@@ -350,7 +238,7 @@ class ProductDetail extends Component {
                   marginLeft: 15,
                   marginBottom: 10,
                 }}>
-                {detail.intro}
+                {detail.content}
               </Text>
             </View>
             <View style={{backgroundColor: '#FFFFFF', marginTop: 10}}>
@@ -363,35 +251,25 @@ class ProductDetail extends Component {
                     style={{width: 40, height: 40, borderRadius: 25}}
                   />
                   <Text style={{marginLeft: 10, paddingTop: 10}}>
-                    {user.nickname}
+                    {user.username}
                   </Text>
                 </TouchableOpacity>
                 <View style={{flexDirection: 'row', padding: 10}}>
                   <Image
                     source={require('../../../android/app/src/main/res/drawable-hdpi/email.png')}
-                    style={{width: 20, height: 20}}
+                    style={{width: 30, height: 30}}
                   />
                   <Text style={{paddingLeft: 10}}>{user.email}</Text>
                 </View>
-                 <View style={{flexDirection: 'row', padding: 10}}>
-                  <Image
-                    source={require('../../../android/app/src/main/res/drawable-hdpi/wechat.png')}
-                    style={{width: 20, height: 20}}
-                  />
-                  <Text style={{paddingLeft: 10}}>{detail.weixin}</Text>
-                </View> 
                 <View style={{flexDirection: 'row', padding: 10}}>
                   <Image
                     source={require('../../../android/app/src/main/res/drawable-hdpi/phone.png')}
-                    style={{width: 20, height: 20}}
+                    style={{width: 30, height: 30}}
                   />
                   <Text style={{paddingLeft: 10}}>{user.phone}</Text>
                 </View>
                 <View style={{flexDirection: 'row', padding: 10}}>
-                <Image
-                    source={require('../../../android/app/src/main/res/drawable-hdpi/time.png')}
-                    style={{width: 20, height: 20}}
-                  />
+                  <Icon name="clock-circle" style={{color: '#36B7AB'}} />
                   <Text style={{paddingLeft: 10}}>
                     创建于{detail.create_time}
                   </Text>

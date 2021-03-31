@@ -12,6 +12,7 @@ import {connect} from 'react-redux'
 import {findByUserId} from '../../api'
 import {reqgetMessage} from '../../redux/actions'
 import JPushModule from "jpush-react-native";
+import {EasyLoading, Loading} from '../../utils/Loading';
 
 
 class User extends Component {
@@ -25,7 +26,10 @@ class User extends Component {
 
 
     findUserById = async () => {
+      //  this.props.navigation.push('Login')
+        EasyLoading.show('网速有点慢');
         const result = await findByUserId(this.props.User.user.id)
+        EasyLoading.dismiss()
         if (result.code === 0) {
             this.setState({User: result.data}, () => {
                 DeviceEventEmitter.emit('changeMine', this.state.User.user.img);
@@ -51,8 +55,8 @@ class User extends Component {
         //注册监听事件，时间名称：changeMine  传参：jsonData.avatar（头像url）
         this._navListener = this.props.navigation.addListener('didFocus', () => {
             this.JPush()
+            this.findUserById()
             this.props.dispatch(reqgetMessage(this.props.User.user.id))
-            //this.findUserById()
             StatusBar.setTranslucent(true)
             StatusBar.setBarStyle('light-content'); //状态栏文字颜色
             StatusBar.setBackgroundColor('#36B7AB'); //状态栏背景色
@@ -70,6 +74,7 @@ class User extends Component {
         const fans = UserData.fans || {}
         return (
             <View style={{flex: 1, marginTop: 15}}>
+                  <Loading />
                 <ScrollView>
                     <ImageBackground style={{width: '100%', height: 150, backgroundColor: '#36B7AB'}}>
                         <View style={{flexDirection: 'row'}}>
@@ -93,7 +98,7 @@ class User extends Component {
                                 }} onPress={() => this.props.navigation.push('MyUser', {
                                     type: 'My',
                                 })} activeOpacity={0.6}>
-                                    <Text style={{fontSize: 12}}>个人主页></Text>
+                                    <Text style={{fontSize: 12}}>个人主页{'>'}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -132,6 +137,7 @@ class User extends Component {
                     </View>
                     <View style={{alignItems: 'center'}}>
                         <View style={{
+                            display:'flex',
                             backgroundColor: '#FFFFFF',
                             flexDirection: 'row',
                             width: '95%',
@@ -139,8 +145,9 @@ class User extends Component {
                             marginTop: 30,
                             paddingTop: 20,
                             paddingBottom: 20,
+                            flexWrap:'wrap',
                         }}>
-                            <TouchableOpacity style={{flex: 1, alignItems: 'center'}}
+                            <TouchableOpacity style={{width:'33%', alignItems: 'center'}}
                                               onPress={() => this.props.navigation.push('Mycollect')}>
                                 <Image
                                     source={require('../../../android/app/src/main/res/drawable-hdpi/mycollect.png')}
@@ -148,9 +155,10 @@ class User extends Component {
                                 />
                                 <Text style={{marginTop: 8}}>我收藏的</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={{flex: 1, alignItems: 'center'}}
+                            <TouchableOpacity style={{width:'33%', alignItems: 'center'}}
                                               onPress={() => this.props.navigation.push('SendProduct', {
-                                                  type: 'send'
+                                                  type: 'send',
+                                                  detail:{type:"1"}
                                               })}>
                                 <Image
                                     source={require('../../../android/app/src/main/res/drawable-hdpi/sendproduct.png')}
@@ -158,13 +166,35 @@ class User extends Component {
                                 />
                                 <Text style={{marginTop: 8}}>发布商品</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={{flex: 1, alignItems: 'center'}}
+                            <TouchableOpacity style={{width:'33%', alignItems: 'center'}}
                                               onPress={() => this.props.navigation.push('SendWantBuy')}>
                                 <Image
                                     source={require('../../../android/app/src/main/res/drawable-hdpi/sendwantbuy.png')}
                                     style={{height: 35, width: 35, tintColor: 'green'}}
                                 />
                                 <Text style={{marginTop: 8}}>发布求购</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={{width:'33%', alignItems: 'center',marginTop:10}}
+                                              onPress={() => this.props.navigation.push('SendProduct', {
+                                                type: 'send',
+                                                detail:{type:"2"}
+                                            })}>
+                                <Image
+                                    source={require('../../../android/app/src/main/res/drawable-hdpi/message.png')}
+                                    style={{height: 35, width: 35, tintColor: 'red'}}
+                                />
+                                <Text style={{marginTop: 8}}>发布资讯</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={{width:'33%', alignItems: 'center',marginTop:10}}
+                                              onPress={() => this.props.navigation.push('SendProduct', {
+                                                type: 'send',
+                                                detail:{type:"3"}
+                                            })}>
+                                <Image
+                                    source={require('../../../android/app/src/main/res/drawable-hdpi/job.png')}
+                                    style={{height: 35, width: 35}}
+                                />
+                                <Text style={{marginTop: 8}}>发布兼职</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
