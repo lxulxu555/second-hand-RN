@@ -999,17 +999,7 @@
   resolved "https://registry.npm.taobao.org/@react-native-community/masked-view/download/@react-native-community/masked-view-0.1.6.tgz#c7f2ac187c1f25aa8c30d11baa8f4398eca3bb84"
   integrity sha1-x/KsGHwfJaqMMNEbqo9DmOyju4Q=
 
-"@react-native-community/viewpager@^1.1.7":
-  version "1.1.7"
-  resolved "https://registry.npm.taobao.org/@react-native-community/viewpager/download/@react-native-community/viewpager-1.1.7.tgz#7d3b1631f1ec91145db92a8e25c80d53027e96ba"
-  integrity sha1-fTsWMfHskRRduSqOJcgNUwJ+lro=
-
-"@react-native-community/viewpager@^2.0.1":
-  version "2.0.2"
-  resolved "https://registry.npm.taobao.org/@react-native-community/viewpager/download/@react-native-community/viewpager-2.0.2.tgz#622b190294b1310c4825c98daeaee1c8443f7124"
-  integrity sha1-YisZApSxMQxIJcmNrq7hyEQ/cSQ=
-
-"@react-native-community/viewpager@^3.3.0":
+"@react-native-community/viewpager@^1.1.7", "@react-native-community/viewpager@^2.0.1", "@react-native-community/viewpager@^3.3.0":
   version "3.3.0"
   resolved "https://registry.npm.taobao.org/@react-native-community/viewpager/download/@react-native-community/viewpager-3.3.0.tgz#e613747a43a31a6f3278f817ba96fdaaa7941f23"
   integrity sha1-5hN0ekOjGm8yePgXupb9qqeUHyM=
@@ -1200,9 +1190,9 @@ acorn-walk@^6.0.1:
   integrity sha1-Ejy487hMIXHx9/slJhWxx4prGow=
 
 acorn@^5.5.3:
-  version "5.7.3"
-  resolved "https://registry.npm.taobao.org/acorn/download/acorn-5.7.3.tgz?cache=0&sync_timestamp=1574807785634&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Facorn%2Fdownload%2Facorn-5.7.3.tgz#67aa231bf8812974b85235a96771eb6bd07ea279"
-  integrity sha1-Z6ojG/iBKXS4UjWpZ3Hra9B+onk=
+  version "5.7.4"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-5.7.4.tgz#3e8d8a9947d0599a1796d10225d7432f4a4acf5e"
+  integrity sha512-1D++VG7BhrtvQpNbBzovKNc1FLGGEE/oGe7b9xJm/RFHMBeUaUGpluV9RLjZa47YFdPcDAenEYuq9pQPcMdLJg==
 
 acorn@^6.0.1:
   version "6.4.0"
