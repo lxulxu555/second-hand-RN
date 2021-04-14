@@ -31,12 +31,6 @@ export default class Setting extends Component {
               <Text style={{margin: 7, fontSize: 15}}>个人资料设置</Text>
             </TouchableOpacity>
           </List.Item>
-          <List.Item disabled arrow="horizontal" onPress={() => {}}>
-            <Text style={{margin: 7, fontSize: 15}}>个人资料设置</Text>
-          </List.Item>
-          <List.Item disabled arrow="horizontal" onPress={() => {}}>
-            <Text style={{margin: 7, fontSize: 15}}>个人资料设置</Text>
-          </List.Item>
         </List>
         <View style={{alignItems: 'center', borderRadius: 20, marginTop: 20}}>
           <Button

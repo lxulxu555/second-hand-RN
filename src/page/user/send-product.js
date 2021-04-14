@@ -120,21 +120,22 @@ class SendProduct extends Component {
   saveProduct = async () => {
     const product = {};
     const type = this.props.navigation.getParam('type');
+    const detail = this.props.navigation.getParam('detail');
     product.images = this.ImageWall?.state?.ImageUrl?.toString();
     product.name = this.state?.title;
     product.id = this.props.navigation?.getParam('detail')?.id;
     product.userid = this.props.User?.user?.id;
-    product.classify2_id = type == "1" ? this.state.classId : "2";
+    product.classify2_id = detail.type == "1" ? this.state.classId : "2";
     product.intro = this.state.productText;
     product.weixin = this.state.weixin;
     product.price1 = this.state.price;
     product.type = this.state.type;
     if (
-      product.userid === "",
-      product.name === '' ||
-      product.price1 === '' ||
-      product.intro === '' ||
-      product.weixin === '' 
+      !product.userid ||
+      !product.name ||
+      !product.price1 ||
+      !product.intro ||
+      !product.weixin
     ) {
       Toast.fail('不能为空');
     } else {

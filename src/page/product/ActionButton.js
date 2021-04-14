@@ -72,7 +72,7 @@ export default class App extends Component {
   render() {
     const {ProductUserId, MyUserId, keyboard, detail} = this.state;
     return keyboard === false ? (
-      detail.type == '1' ? (
+      
         ProductUserId === MyUserId ? (
           <ActionButton
             buttonColor="rgba(231,76,60,1)"
@@ -93,13 +93,16 @@ export default class App extends Component {
               onPress={() => this.detailProduct()}>
               <Text style={{color: '#FFFFFF'}}>删除</Text>
             </ActionButton.Item>
-            <ActionButton.Item
+            {
+              detail.type == "1" &&  <ActionButton.Item
               buttonColor="#1abc9c"
               onPress={() => this.UpOrDownProduct()}>
               <Text style={{color: '#FFFFFF'}}>
                 {detail.state === 0 ? '下架' : '上架'}
               </Text>
-            </ActionButton.Item>
+            </ActionButton.Item> 
+            }
+           
           </ActionButton>
         ) : (
           <ActionButton
@@ -117,21 +120,6 @@ export default class App extends Component {
           />
         )
       ) : (
-        <ActionButton
-          buttonColor="#36B7AB"
-          onPress={() => this.hideButton()}
-          renderIcon={() => (
-            <View>
-              <Image
-                source={require('../../../android/app/src/main/res/drawable-hdpi/message.png')}
-                style={{width: 25, height: 25}}
-              />
-              <Text style={{color: '#FFFFFF'}}>留言</Text>
-            </View>
-          )}
-        />
-      )
-    ) : (
       <View />
     );
   }

@@ -49,7 +49,7 @@ export const reqDeleteImage = (url) => ajax(BASE + '',{url},'POST')
 //点赞评论
 export const reqLikeComment = (type, state,token) => ajax(BASE + '/token/like/save',{type,state},'POSTHEADER',{token})
 //收藏商品
-export const reqLikeProduct = (userId,goodsId,type,token) => ajax(BASE + '/token/collect/save',{userId,goodsId,type},'POSTHEADER',{token})
+export const reqLikeProduct = (userId,goodsId,token) => ajax(BASE + '/token/collect/save',{userId,goodsId},'POSTHEADER',{token})
 //发表评论
 export const reqSendComment = (content, userid, goodsid,type,token) => ajax(BASE + '/token/comment/save',{content,userid,goodsid,type},'POSTHEADER',{token})
 //发表回复
